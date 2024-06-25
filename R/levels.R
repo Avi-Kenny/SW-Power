@@ -19,14 +19,13 @@ if (cfg$run_sims && Sys.getenv("sim_run") %in% c("first", "")) {
       "IT" = list(cal_time="cat", exp_time="IT", n_omit=0),
       "ETI" = list(cal_time="cat", exp_time="cat", n_omit=0),
       "ETI, linear cal time" = list(cal_time="linear", exp_time="cat", n_omit=0),
-      # # "ETI, spline time" = list(cal_time="NCS", exp_time="cat", n_omit=0),
+      "ETI, spline time" = list(cal_time="NCS", exp_time="cat", n_omit=0)
       # # "NCS, spline time" = list(cal_time="NCS", exp_time="NCS", n_omit=0),
-      # "ETI, no time" = list(cal_time="none", exp_time="cat", n_omit=0),
+
       
       
-      
-      "ETI, omit last 1" = list(cal_time="cat", exp_time="cat", n_omit=1),
-      "ETI, omit last 2" = list(cal_time="cat", exp_time="cat", n_omit=2)
+      # "ETI, omit last 1" = list(cal_time="cat", exp_time="cat", n_omit=1),
+      # "ETI, omit last 2" = list(cal_time="cat", exp_time="cat", n_omit=2)
     )
   )
   
