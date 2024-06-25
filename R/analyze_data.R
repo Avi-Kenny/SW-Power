@@ -26,35 +26,57 @@ analyze_data <- function(dat, cal_time, exp_time, re, n_omit) {
   
   params <- attr(dat, "params")
   
-  # Create exposure time variables and calendar time factor
-  for (s in c(1:params$n_sequences)) {
-    dat[[paste0("s_", s)]] <- In(dat$s_ij==s)
+  # Create exposure time variables (factors or spline basis)
+  S <- params$n_sequences
+  if (exp_time=="cat") {
+    
+    for (s in c(1:S)) {
+      dat[[paste0("s_", s)]] <- In(dat$s_ij==s)
+    }
+    
+  } else if (exp_time=="NCS") {
+    
+    knots_exp <- seq(min(dat$s_ij), max(dat$s_ij), length.out=5)
+    basis_exp <- splines::ns(
+      x = dat$s_ij,
+      knots = knots_exp[2:4],
+      intercept = F, # !!!!! intercept
+      Boundary.knots = knots_exp[c(1,5)]
+    )
+    dat$s_1 <- basis_exp[,1]
+    dat$s_2 <- basis_exp[,2]
+    dat$s_3 <- basis_exp[,3]
+    dat$s_4 <- basis_exp[,4]
+    rm(basis_exp)
+    
   }
   
-  # Create transformed calendar time variables
+  # Create calendar time variables (factors or spline basis)
   if (cal_time=="cat") {
     
     dat[["j_fac"]] <- factor(dat$j)
     
   } else if (cal_time=="NCS") {
     
-    knots <- seq(min(dat$j), max(dat$j), length.out=5)
-    ns_basis <- splines::ns(
+    knots_cal <- seq(min(dat$j), max(dat$j), length.out=5)
+    basis_cal <- splines::ns(
       x = dat$j,
-      knots = knots[2:4],
-      intercept = F,
-      Boundary.knots = knots[c(1,5)]
+      knots = knots_cal[2:4],
+      intercept = F, # !!!!! intercept
+      Boundary.knots = knots_cal[c(1,5)]
     )
-    dat$j_1 <- ns_basis[,1]
-    dat$j_2 <- ns_basis[,2]
-    dat$j_3 <- ns_basis[,3]
-    dat$j_4 <- ns_basis[,4]
-    rm(knots,ns_basis)
+    dat$j_1 <- basis_cal[,1]
+    dat$j_2 <- basis_cal[,2]
+    dat$j_3 <- basis_cal[,3]
+    dat$j_4 <- basis_cal[,4]
+    rm(knots_cal,basis_cal)
     
   }
 
   # Create cluster-time interaction for "random time effect"
-  dat$ij <- as.integer(factor(paste0(dat$i,"-",dat$j)))
+  if (re=="cluster+time") {
+    dat$ij <- as.integer(factor(paste0(dat$i,"-",dat$j)))
+  }
   
   if (exp_time=="IT") {
     
@@ -66,26 +88,23 @@ analyze_data <- function(dat, cal_time, exp_time, re, n_omit) {
       formula <- paste0(formula, "(1|i) + (1|ij)")
     }
     
-    suppressMessages({
-      model <- lme4::lmer(formula, data=dat)
-    })
+    suppressMessages({ model <- lme4::lmer(formula, data=dat) })
     
     summ <- summary(model)
     est <- summ$coefficients["x_ij", "Estimate"]
     se <- summ$coefficients["x_ij", "Std. Error"]
     
-  } else if (exp_time=="cat") {
+  } else if (exp_time %in% c("cat", "NCS")) {
     
     formula <- "y_ij ~ "
-    for (s in c(1:params$n_sequences)) {
-      formula <- paste0(formula, "s_", s, " + ")
-    }
+    num_s_terms <- ifelse(exp_time=="cat", params$n_sequences, 4) # !!!!! intercept
+    for (s in c(1:num_s_terms)) { formula <- paste0(formula, "s_", s, " + ") }
     if (cal_time=="cat") {
       formula <- paste0(formula, "j_fac - 1 + ")
     } else if (cal_time=="linear") {
       formula <- paste0(formula, "j + ")
     } else if (cal_time=="NCS") {
-      formula <- paste0(formula, "j_1 + j_2 + j_3 + j_4 + ")
+      formula <- paste0(formula, "j_1 + j_2 + j_3 + j_4 + ") # !!!!! intercept
     }
     if (re=="cluster") {
       formula <- paste0(formula, "(1|i)")
@@ -93,9 +112,7 @@ analyze_data <- function(dat, cal_time, exp_time, re, n_omit) {
       formula <- paste0(formula, "(1|i) + (1|ij)")
     }
 
-    suppressMessages({
-      model <- lme4::lmer(formula, data=dat)
-    })
+    suppressMessages({ model <- lme4::lmer(formula, data=dat) })
     
     summ <- summary(model)
     coeff_names <- names(summ$coefficients[,1])
@@ -107,49 +124,20 @@ analyze_data <- function(dat, cal_time, exp_time, re, n_omit) {
     sigma_s_hat <- sigma_s_hat[indices,indices]
     sigma_s_hat <- as.matrix(sigma_s_hat)
     
-    n_exp_times <- length(delta_s_hat)
-    H_len <- n_exp_times - n_omit
-    A <- (1/H_len) * matrix(c(rep(1,H_len), rep(0,n_omit)), nrow=1)
-    est <- as.numeric(A %*% delta_s_hat)
-    se <- sqrt(as.numeric(A %*% sigma_s_hat %*% t(A)))
-    
-  } else if (exp_time=="NCS") {
-    
-    
-    
-    formula <- "y_ij ~ "
-    for (s in c(1:4)) {
-      formula <- paste0(formula, "s_", s, " + ")
-    }
-    if (cal_time=="cat") {
-      formula <- paste0(formula, "j_fac - 1 + ")
-    } else if (cal_time=="linear") {
-      formula <- paste0(formula, "j + ")
-    } else if (cal_time=="NCS") {
-      formula <- paste0(formula, "j_1 + j_2 + j_3 + j_4 + ")
-    }
-    if (re=="cluster") {
-      formula <- paste0(formula, "(1|i)")
-    } else if (re=="cluster+time") {
-      formula <- paste0(formula, "(1|i) + (1|ij)")
+    if (exp_time=="NCS") {
+      
+      B <- splines::ns(
+        x = c(1:S),
+        knots = knots_exp[2:4],
+        intercept = F, # !!!!! intercept
+        Boundary.knots = knots_exp[c(1,5)]
+      )
+      delta_s_hat <- as.numeric(B %*% delta_s_hat)
+      sigma_s_hat <- B %*% sigma_s_hat %*% t(B)
+      
     }
     
-    suppressMessages({
-      model <- lme4::lmer(formula, data=dat)
-    })
-    
-    summ <- summary(model)
-    coeff_names <- names(summ$coefficients[,1])
-    delta_s_hat <- as.numeric(summary(model)$coefficients[,1])
-    sigma_s_hat <- vcov(model)
-    indices <- c(1:length(coeff_names))[substr(coeff_names, 1, 2)=="s_"]
-    coeff_names <- coeff_names[indices]
-    delta_s_hat <- delta_s_hat[indices]
-    sigma_s_hat <- sigma_s_hat[indices,indices]
-    sigma_s_hat <- as.matrix(sigma_s_hat)
-    
-    n_exp_times <- length(delta_s_hat)
-    H_len <- n_exp_times - n_omit
+    H_len <- S - n_omit
     A <- (1/H_len) * matrix(c(rep(1,H_len), rep(0,n_omit)), nrow=1)
     est <- as.numeric(A %*% delta_s_hat)
     se <- sqrt(as.numeric(A %*% sigma_s_hat %*% t(A)))
