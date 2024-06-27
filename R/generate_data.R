@@ -9,10 +9,13 @@
 #' @param n_clust_per_seq Integer. Number of clusters per sequence
 #' @param n_ind_per_cell Integer. Number of individuals per cluster - time
 #'     period cell (K)
+#' @param re One of c("cluster", "cluster+time"); whether a cluster intercept
+#'     should be included ("cluster") or a cluster intercept plus a
+#'     cluster-period intercept ("cluster+time")
 #' @return A dataframe representing a stepped wedge dataset
 generate_dataset <- function(
   data_type, sigma, tau, beta_j, delta_s, n_sequences, n_clust_per_seq,
-  n_ind_per_cell
+  n_ind_per_cell, re
 ) {
   
   # Misc
@@ -32,28 +35,38 @@ generate_dataset <- function(
   pointer <- 1
   for (i in clusters) {
     
-    alpha_i <- rnorm(n=1, mean=0, sd=tau)
+    if (re=="cluster") {
+      alpha_i <- rnorm(n=1, mean=0, sd=tau)
+    } else if (re=="cluster+time") {
+      alpha_i <- rnorm(n=1, mean=0, sd=tau/sqrt(2))
+    }
     
     for (j in c(1:J)) {
       
       x_ij <- In(j>=crossover[i])
       s_ij <- round(x_ij*(j-crossover[i]+1))
       
+      if (re=="cluster") {
+        gamma_ij <- 0
+      } else if (re=="cluster+time") {
+        gamma_ij <- rnorm(n=1, mean=0, sd=tau/sqrt(2))
+      }
+      
       if (data_type=="normal") {
         
         if (x_ij==0) {
-          mu_ij <- beta_j[j] + alpha_i
+          mu_ij <- beta_j[j] + alpha_i + gamma_ij
         } else if (x_ij==1) {
-          mu_ij <- beta_j[j] + alpha_i + delta_s[s_ij]
+          mu_ij <- beta_j[j] + alpha_i + gamma_ij + delta_s[s_ij]
         }
         y_ij <- rnorm(n=K, mean=mu_ij, sd=sigma)
         
       } else if (data_type=="binomial") {
         
         if (x_ij==0) {
-          p_ij <- expit(beta_j[j] + alpha_i)
+          p_ij <- expit(beta_j[j] + alpha_i + gamma_ij)
         } else if (x_ij==1) {
-          p_ij <- expit(beta_j[j] + alpha_i + delta_s[s_ij])
+          p_ij <- expit(beta_j[j] + alpha_i + gamma_ij + delta_s[s_ij])
         }
         y_ij <- rbinom(n=K, size=1, prob=p_ij)
         

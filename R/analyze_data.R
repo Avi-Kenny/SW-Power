@@ -8,11 +8,11 @@
 #' @param re One of c("cluster", "cluster+time"); whether a cluster intercept
 #'     should be included ("cluster") or a cluster intercept plus a
 #'     cluster-period intercept ("cluster+time")
-#' @param n_omit How many time points should be omitted from the end of the TATE
-#'     estimator
+#' @param estimand One of c("TATE", "PTE-1", "PTE-S"); the target of estimation
+#' @param return_curve Boolean; if true, the entire estimated curve is returned
 #' @return A list of the form list(est=0, se=0) representing the point estimate
 #'     and SE estimate
-analyze_data <- function(dat, cal_time, exp_time, re, n_omit) {
+analyze_data <- function(dat, cal_time, exp_time, re, estimand, return_curve) {
   
   if (!(cal_time %in% c("cat", "linear", "NCS"))) {
     stop("`cal_time` misspecified.")
@@ -36,17 +36,24 @@ analyze_data <- function(dat, cal_time, exp_time, re, n_omit) {
     
   } else if (exp_time=="NCS") {
     
-    knots_exp <- seq(min(dat$s_ij), max(dat$s_ij), length.out=5)
+    knots_exp <- seq(min(dat$s_ij), max(dat$s_ij), length.out=4)
     basis_exp <- splines::ns(
       x = dat$s_ij,
-      knots = knots_exp[2:4],
-      intercept = F, # !!!!! intercept
-      Boundary.knots = knots_exp[c(1,5)]
+      knots = knots_exp[2:3],
+      intercept = TRUE,
+      Boundary.knots = knots_exp[c(1,4)]
     )
-    dat$s_1 <- basis_exp[,1]
-    dat$s_2 <- basis_exp[,2]
-    dat$s_3 <- basis_exp[,3]
-    dat$s_4 <- basis_exp[,4]
+    # dat$s_1 <- basis_exp[,1]
+    # dat$s_2 <- basis_exp[,2]
+    # dat$s_3 <- basis_exp[,3]
+    # dat$s_4 <- basis_exp[,4]
+    
+    # !!!!! Modification needed for spline with interept
+    dat$s_1 <- basis_exp[,1] * dat$x_ij
+    dat$s_2 <- basis_exp[,2] * dat$x_ij
+    dat$s_3 <- basis_exp[,3] * dat$x_ij
+    dat$s_4 <- basis_exp[,4] * dat$x_ij
+    
     rm(basis_exp)
     
   }
@@ -62,7 +69,7 @@ analyze_data <- function(dat, cal_time, exp_time, re, n_omit) {
     basis_cal <- splines::ns(
       x = dat$j,
       knots = knots_cal[2:4],
-      intercept = F, # !!!!! intercept
+      intercept = FALSE,
       Boundary.knots = knots_cal[c(1,5)]
     )
     dat$j_1 <- basis_cal[,1]
@@ -97,14 +104,14 @@ analyze_data <- function(dat, cal_time, exp_time, re, n_omit) {
   } else if (exp_time %in% c("cat", "NCS")) {
     
     formula <- "y_ij ~ "
-    num_s_terms <- ifelse(exp_time=="cat", params$n_sequences, 4) # !!!!! intercept
+    num_s_terms <- ifelse(exp_time=="cat", params$n_sequences, 4)
     for (s in c(1:num_s_terms)) { formula <- paste0(formula, "s_", s, " + ") }
     if (cal_time=="cat") {
       formula <- paste0(formula, "j_fac - 1 + ")
     } else if (cal_time=="linear") {
       formula <- paste0(formula, "j + ")
     } else if (cal_time=="NCS") {
-      formula <- paste0(formula, "j_1 + j_2 + j_3 + j_4 + ") # !!!!! intercept
+      formula <- paste0(formula, "j_1 + j_2 + j_3 + j_4 + ")
     }
     if (re=="cluster") {
       formula <- paste0(formula, "(1|i)")
@@ -128,22 +135,39 @@ analyze_data <- function(dat, cal_time, exp_time, re, n_omit) {
       
       B <- splines::ns(
         x = c(1:S),
-        knots = knots_exp[2:4],
-        intercept = F, # !!!!! intercept
-        Boundary.knots = knots_exp[c(1,5)]
+        knots = knots_exp[2:3],
+        intercept = TRUE,
+        Boundary.knots = knots_exp[c(1,4)]
       )
       delta_s_hat <- as.numeric(B %*% delta_s_hat)
       sigma_s_hat <- B %*% sigma_s_hat %*% t(B)
       
     }
     
-    H_len <- S - n_omit
-    A <- (1/H_len) * matrix(c(rep(1,H_len), rep(0,n_omit)), nrow=1)
+    if (estimand=="TATE") {
+      n_omit <- 0 # !!!!!
+      H_len <- S - n_omit
+      A <- (1/H_len) * matrix(c(rep(1,H_len), rep(0,n_omit)), nrow=1)
+    } else if (estimand=="PTE-1") {
+      A <- matrix(c(1, rep(0,S-1)), nrow=1)
+    } else if (estimand=="PTE-S") {
+      A <- matrix(c(rep(0,S-1), 1), nrow=1)
+    }
     est <- as.numeric(A %*% delta_s_hat)
     se <- sqrt(as.numeric(A %*% sigma_s_hat %*% t(A)))
     
   }
   
-  return(list(est=est, se=se))
+  res <- list(est=est, se=se)
+  
+  if (return_curve) {
+    if (exp_time=="IT") {
+      res$curve <- rep(est, S)
+    } else {
+      res$curve <- delta_s_hat
+    }
+  }
+  
+  return(res)
   
 }

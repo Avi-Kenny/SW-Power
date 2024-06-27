@@ -5,7 +5,7 @@ cfg <- list(
   sim_which = "Power",
   sim_level_set = "Power set 1",
   sim_run_or_update = "run",
-  sim_num = 10,
+  sim_num = 1000,
   sim_parallel = F,
   sim_n_cores = 3,
   sim_stop_at_error = F
