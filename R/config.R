@@ -2,8 +2,8 @@
 .libPaths(c("/home/akenny/R_lib", "/hpc/home/ak811/R_lib", .libPaths()))
 
 # Set packages
-cfg$pkgs <- c("magrittr", "splines", "dplyr", "lme4")
-cfg$pkgs_nocluster <- c("ggplot2", "viridis")
+cfg$pkgs <- c("magrittr", "splines", "dplyr", "lme4", "ggpubr")
+cfg$pkgs_nocluster <- c("ggplot2", "viridis", "swCRTdesign")
 
 # Set cluster config
 if (Sys.getenv("HOME")=="/home/akenny") {

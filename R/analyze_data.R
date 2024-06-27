@@ -43,12 +43,6 @@ analyze_data <- function(dat, cal_time, exp_time, re, estimand, return_curve) {
       intercept = TRUE,
       Boundary.knots = knots_exp[c(1,4)]
     )
-    # dat$s_1 <- basis_exp[,1]
-    # dat$s_2 <- basis_exp[,2]
-    # dat$s_3 <- basis_exp[,3]
-    # dat$s_4 <- basis_exp[,4]
-    
-    # !!!!! Modification needed for spline with interept
     dat$s_1 <- basis_exp[,1] * dat$x_ij
     dat$s_2 <- basis_exp[,2] * dat$x_ij
     dat$s_3 <- basis_exp[,3] * dat$x_ij

@@ -29,7 +29,7 @@ plot <- ggplot(summ, aes(x=n_sequences, y=power, color=model)) +
   labs(y="Power", x="Number of sequences", color="Model") +
   theme(legend.position="bottom")
 
-print(plot)
+print(plot) # Export 10" x 7"
 
 
 
