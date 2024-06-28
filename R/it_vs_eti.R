@@ -124,15 +124,17 @@ ss_ratio <- function(power, n_sequences, n_clust_per_seq, effect_size, icc,
 # Plotting function
 make_plot <- function(x_lab, df, which) {
   if (which=="n_omit") {
-    lab_wo <- "# time points omitted from end"
+    lab_col <- "# time points omitted from end"
+    scale_y <- scale_y_continuous(breaks=seq(1,3,0.2), limits=c(1,3))
   } else if (which=="n_wash") {
-    lab_wo <- "# washout time points"
+    lab_col <- "# washout time points"
+    scale_y <- scale_y_continuous(breaks=seq(1,7,0.5), limits=c(1,7.1))
   }
   plot <- ggplot(df, aes(x=x, y=y, color=factor(n_wo))) +
     geom_line() +
     geom_point() +
-    scale_y_continuous(breaks=seq(1,3,0.2), limits=c(1,3)) +
-    labs(x=x_lab, y="ETI/IT sample size ratio", color=lab_wo) +
+    scale_y +
+    labs(x=x_lab, y="ETI/IT sample size ratio", color=lab_col) +
     theme(legend.position="bottom")
   return(plot)
 }
@@ -274,7 +276,7 @@ plot <- annotate_figure(
   top = text_grob("Sample size ratio required for 90% power, TATE", size=14)
 )
 ggsave(
-  filename = "../Figures + Tables/fig_02_SSR_2.pdf",
+  filename = "../Figures + Tables/fig_01_SSR_1.pdf",
   plot=plot, device="pdf", width=10, height=8
 )
 

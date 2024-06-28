@@ -2,7 +2,7 @@
 ##### Summarize simulation results #####
 ########################################.
 
-# sim <- readRDS("SimEngine.out/power_1_20240613.rds")
+sim <- readRDS("SimEngine.out/power_1_20240628.rds")
 
 summ <- SimEngine::summarize(sim,
   list(stat="mean", x="reject", name="power")
@@ -10,7 +10,6 @@ summ <- SimEngine::summarize(sim,
   # list(stat="sd", x="est"),
   # list(stat="coverage", estimate="est", se="se", truth="true_tate", name="cov")
 )
-# summ %>% arrange(n_sequences) %>% print()
 
 summ %<>% dplyr::mutate(
   n_clust_per_seq = paste0(n_clust_per_seq, " clusters / seq"),
@@ -29,7 +28,10 @@ plot <- ggplot(summ, aes(x=n_sequences, y=power, color=model)) +
   labs(y="Power", x="Number of sequences", color="Model") +
   theme(legend.position="bottom")
 
-print(plot) # Export 10" x 7"
+ggsave(
+  filename = "../Figures + Tables/fig_03_models.pdf",
+  plot=plot, device="pdf", width=7, height=5
+)
 
 
 
