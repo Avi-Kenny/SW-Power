@@ -12,14 +12,16 @@ summ <- SimEngine::summarize(sim,
 )
 
 summ %<>% dplyr::mutate(
-  n_clust_per_seq = paste0(n_clust_per_seq, " clusters / seq"),
+  # n_clust_per_seq = paste0(n_clust_per_seq, " clusters / seq"),
+  icc = paste0("ICC: ", icc),
   estimand = factor(estimand, levels=c("TATE", "PTE-1", "PTE-S"))
 )
 
 plot <- ggplot(summ, aes(x=n_sequences, y=power, color=model)) +
   geom_line() +
   geom_point() +
-  facet_grid(rows=dplyr::vars(n_clust_per_seq), cols=dplyr::vars(estimand)) +
+  # facet_grid(rows=dplyr::vars(n_clust_per_seq), cols=dplyr::vars(estimand)) +
+  facet_grid(rows=dplyr::vars(icc), cols=dplyr::vars(estimand)) +
   scale_y_continuous(
     breaks = seq(0,1,0.2),
     limits = c(0,1),
@@ -29,7 +31,7 @@ plot <- ggplot(summ, aes(x=n_sequences, y=power, color=model)) +
   theme(legend.position="bottom")
 
 ggsave(
-  filename = "../Figures + Tables/fig_03_models.pdf",
+  filename = "../Figures + Tables/fig_models.pdf",
   plot=plot, device="pdf", width=7, height=5
 )
 

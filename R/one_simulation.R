@@ -15,11 +15,12 @@ if (cfg$sim_which=="Power") {
 
     # Generate data
     batch({
+      tau <- L$sigma * sqrt(L$icc/(1-L$icc))
       dat <- generate_dataset(
         data_type = L$data_type,
         sigma = L$sigma,
-        tau = L$tau,
-        beta_j = rep(0,L$n_sequences+1),
+        tau = tau,
+        beta_j = seq(from=0, to=1, length.out=L$n_sequences+1),
         delta_s = rep(0.2,L$n_sequences),
         n_sequences = L$n_sequences,
         n_clust_per_seq = L$n_clust_per_seq,

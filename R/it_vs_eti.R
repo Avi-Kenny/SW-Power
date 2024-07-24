@@ -2,6 +2,11 @@
 ##### Declare helper functions #####
 ####################################.
 
+# Setup
+cfg2 <- list(
+  suppress_title = T
+)
+
 # Helper function to calculate power given inputs
 calc_power <- function(model, n_sequences, n_clust_per_seq, n_ind_per_cell,
                        effect_size, icc, n_omit, n_wash) {
@@ -122,15 +127,21 @@ ss_ratio <- function(power, n_sequences, n_clust_per_seq, effect_size, icc,
 }
 
 # Plotting function
-make_plot <- function(x_lab, df, which) {
-  if (which=="n_omit") {
+make_plot <- function(x_lab, which_plot, df) {
+  if (which_plot=="n_omit") {
     lab_col <- "# time points omitted from end"
     scale_y <- scale_y_continuous(breaks=seq(1,3,0.2), limits=c(1,3))
-  } else if (which=="n_wash") {
+    aes <- aes(x=x, y=y, color=factor(n_wo))
+  } else if (which_plot=="n_wash") {
     lab_col <- "# washout time points"
     scale_y <- scale_y_continuous(breaks=seq(1,7,0.5), limits=c(1,7.1))
+    aes <- aes(x=x, y=y, color=factor(n_wo))
+  } else if (which_plot=="basic") {
+    lab_col <- ""
+    scale_y <- scale_y_continuous(breaks=seq(1,3,0.2), limits=c(1,3))
+    aes <- aes(x=x, y=y)
   }
-  plot <- ggplot(df, aes(x=x, y=y, color=factor(n_wo))) +
+  plot <- ggplot(df, aes) +
     geom_line() +
     geom_point() +
     scale_y +
@@ -139,286 +150,171 @@ make_plot <- function(x_lab, df, which) {
   return(plot)
 }
 
-#####################################.
-##### Plot: SSR, varying n_omit #####
-#####################################.
 
-n_omit_vec <- c(0:3)
 
-# Plot component 1: Sequences
-n_sequences <- c(2:10)
-v_ratios_1 <- c()
-for (n_omit in n_omit_vec) {
-  v_ratios_1 <- c(v_ratios_1, sapply(n_sequences, function(x) {
-    tryCatch(
-      expr = {
-        return(ss_ratio(
-          power = 0.9,
-          n_sequences = x,
-          n_clust_per_seq = 4,
-          effect_size = 0.1,
-          icc = 0.1,
-          n_omit = n_omit,
-          n_wash = 0
-        ))
-      },
-      error = function(e) { return(NA) }
+#####################.
+##### Plot: SSR #####
+#####################.
+
+for (which_plot in c("basic", "n_omit", "n_wash")) {
+  
+  if (which_plot=="basic") {
+    vec_vary <- 0
+    n_omit_vec <- 0
+    n_wash_vec <- 0
+  } else if (which_plot=="n_omit") {
+    vec_vary <- c(0:3)
+    n_omit_vec <- vec_vary
+    n_wash_vec <- 0
+  } else if (which_plot=="n_wash") {
+    vec_vary <- c(0:3)
+    n_omit_vec <- 0
+    n_wash_vec <- vec_vary
+  }
+  
+  # Plot component 1: Sequences
+  n_sequences <- c(2:10)
+  v_ratios_1 <- c()
+  for (n_omit in n_omit_vec) {
+    for (n_wash in n_wash_vec) {
+      v_ratios_1 <- c(v_ratios_1, sapply(n_sequences, function(x) {
+        tryCatch(
+          expr = {
+            return(ss_ratio(
+              power = 0.9,
+              n_sequences = x,
+              n_clust_per_seq = 4,
+              effect_size = 0.1,
+              icc = 0.1,
+              n_omit = n_omit,
+              n_wash = n_wash
+            ))
+          },
+          error = function(e) { return(NA) }
+        )
+      }))
+    }
+  }
+  p01 <- make_plot(
+    x_lab = "# sequences",
+    which_plot = which_plot,
+    df = data.frame(
+      x = rep(n_sequences, length(vec_vary)),
+      y = v_ratios_1,
+      n_wo = rep(vec_vary, each=length(n_sequences))
     )
-  }))
-}
-p01 <- make_plot(
-  x_lab = "# sequences",
-  which = "n_omit",
-  data.frame(
-    x = rep(n_sequences, length(n_omit_vec)),
-    y = v_ratios_1,
-    n_wo = rep(n_omit_vec, each=length(n_sequences))
   )
-)
-
-# Plot component 2: Effect sizes
-effect_sizes <- seq(0.05,0.4,0.05)
-v_ratios_2 <- c()
-for (n_omit in n_omit_vec) {
-  v_ratios_2 <- c(v_ratios_2, sapply(effect_sizes, function(x) {
-    tryCatch(
-      expr = {
-        return(ss_ratio(
-          power = 0.9,
-          n_sequences = 6,
-          n_clust_per_seq = 4,
-          effect_size = x,
-          icc = 0.1,
-          n_omit = n_omit,
-          n_wash = 0
-        ))
-      },
-      error = function(e) { return(NA) }
+  
+  # Plot component 2: Effect sizes
+  effect_sizes <- seq(0.05,0.4,0.05)
+  v_ratios_2 <- c()
+  for (n_omit in n_omit_vec) {
+    for (n_wash in n_wash_vec) {
+      v_ratios_2 <- c(v_ratios_2, sapply(effect_sizes, function(x) {
+        tryCatch(
+          expr = {
+            return(ss_ratio(
+              power = 0.9,
+              n_sequences = 6,
+              n_clust_per_seq = 4,
+              effect_size = x,
+              icc = 0.1,
+              n_omit = n_omit,
+              n_wash = n_wash
+            ))
+          },
+          error = function(e) { return(NA) }
+        )
+      }))
+    }
+  }
+  p02 <- make_plot(
+    x_lab = "Effect size",
+    which_plot = which_plot,
+    df = data.frame(
+      x = rep(effect_sizes, length(vec_vary)),
+      y = v_ratios_2,
+      n_wo = rep(vec_vary, each=length(effect_sizes))
     )
-  }))
-}
-p02 <- make_plot(
-  x_lab = "Effect size",
-  which = "n_omit",
-  data.frame(
-    x = rep(effect_sizes, length(n_omit_vec)),
-    y = v_ratios_2,
-    n_wo = rep(n_omit_vec, each=length(effect_sizes))
   )
-)
-
-# Plot component 3: ICCs
-iccs <- c(seq(0,0.01,0.002),seq(0.02,0.2,0.01))
-v_ratios_3 <- c()
-for (n_omit in n_omit_vec) {
-  v_ratios_3 <- c(v_ratios_3, sapply(iccs, function(x) {
-    tryCatch(
-      expr = {
-        return(ss_ratio(
-          power = 0.9,
-          n_sequences = 6,
-          n_clust_per_seq = 4,
-          effect_size = 0.1,
-          icc = x,
-          n_omit = n_omit,
-          n_wash = 0
-        ))
-      },
-      error = function(e) { return(NA) }
+  
+  # Plot component 3: ICCs
+  iccs <- c(seq(0,0.01,0.002),seq(0.02,0.2,0.01))
+  v_ratios_3 <- c()
+  for (n_omit in n_omit_vec) {
+    for (n_wash in n_wash_vec) {
+      v_ratios_3 <- c(v_ratios_3, sapply(iccs, function(x) {
+        tryCatch(
+          expr = {
+            return(ss_ratio(
+              power = 0.9,
+              n_sequences = 6,
+              n_clust_per_seq = 4,
+              effect_size = 0.1,
+              icc = x,
+              n_omit = n_omit,
+              n_wash = n_wash
+            ))
+          },
+          error = function(e) { return(NA) }
+        )
+      }))
+    }
+  }
+  p03 <- make_plot(
+    x_lab = "ICC",
+    which_plot = which_plot,
+    df = data.frame(
+      x = rep(iccs, length(vec_vary)),
+      y = v_ratios_3,
+      n_wo = rep(vec_vary, each=length(iccs))
     )
-  }))
-}
-p03 <- make_plot(
-  x_lab = "ICC",
-  which = "n_omit",
-  data.frame(
-    x = rep(iccs, length(n_omit_vec)),
-    y = v_ratios_3,
-    n_wo = rep(n_omit_vec, each=length(iccs))
   )
-)
-
-# Plot component 4: Clusters per sequence
-n_clust_per_seqs <- c(1:8)
-v_ratios_4 <- c()
-for (n_omit in n_omit_vec) {
-  v_ratios_4 <- c(v_ratios_4, sapply(n_clust_per_seqs, function(x) {
-    tryCatch(
-      expr = {
-        return(ss_ratio(
-          power = 0.9,
-          n_sequences = 6,
-          n_clust_per_seq = x,
-          effect_size = 0.1,
-          icc = 0.1,
-          n_omit = n_omit,
-          n_wash = 0
-        ))
-      },
-      error = function(e) { return(NA) }
+  
+  # Plot component 4: Clusters per sequence
+  n_clust_per_seqs <- c(1:8)
+  v_ratios_4 <- c()
+  for (n_omit in n_omit_vec) {
+    for (n_wash in n_wash_vec) {
+      v_ratios_4 <- c(v_ratios_4, sapply(n_clust_per_seqs, function(x) {
+        tryCatch(
+          expr = {
+            return(ss_ratio(
+              power = 0.9,
+              n_sequences = 6,
+              n_clust_per_seq = x,
+              effect_size = 0.1,
+              icc = 0.1,
+              n_omit = n_omit,
+              n_wash = n_wash
+            ))
+          },
+          error = function(e) { return(NA) }
+        )
+      }))
+    }
+  }
+  p04 <- make_plot(
+    x_lab = "# clusters per sequence",
+    which_plot = which_plot,
+    df = data.frame(
+      x = rep(n_clust_per_seqs, length(vec_vary)),
+      y = v_ratios_4,
+      n_wo = rep(vec_vary, each=length(n_clust_per_seqs))
     )
-  }))
-}
-p04 <- make_plot(
-  x_lab = "# clusters per sequence",
-  which = "n_omit",
-  data.frame(
-    x = rep(n_clust_per_seqs, length(n_omit_vec)),
-    y = v_ratios_4,
-    n_wo = rep(n_omit_vec, each=length(n_clust_per_seqs))
   )
-)
-
-# Create combined plot
-plot <- ggpubr::ggarrange(p01, p02, p03, p04, ncol=2, nrow=2)
-plot <- annotate_figure(
-  plot,
-  top = text_grob("Sample size ratio required for 90% power, TATE", size=14)
-)
-ggsave(
-  filename = "../Figures + Tables/fig_01_SSR_1.pdf",
-  plot=plot, device="pdf", width=10, height=8
-)
-
-
-
-#####################################.
-##### Plot: SSR, varying n_wash #####
-#####################################.
-
-n_wash_vec <- c(0:3)
-
-# Plot component 1: Sequences
-n_sequences <- c(2:10)
-v_ratios_1 <- c()
-for (n_wash in n_wash_vec) {
-  v_ratios_1 <- c(v_ratios_1, sapply(n_sequences, function(x) {
-    tryCatch(
-      expr = {
-        return(ss_ratio(
-          power = 0.9,
-          n_sequences = x,
-          n_clust_per_seq = 4,
-          effect_size = 0.1,
-          icc = 0.1,
-          n_omit = 0,
-          n_wash = n_wash
-        ))
-      },
-      error = function(e) { return(NA) }
+  
+  # Create combined plot
+  plot <- ggpubr::ggarrange(p01, p02, p03, p04, ncol=2, nrow=2)
+  if (!cfg2$suppress_title) {
+    plot <- annotate_figure(
+      plot,
+      top = text_grob("Sample size ratio required for 90% power, TATE", size=14)
     )
-  }))
-}
-p01 <- make_plot(
-  x_lab = "# sequences",
-  which = "n_wash",
-  data.frame(
-    x = rep(n_sequences, length(n_wash_vec)),
-    y = v_ratios_1,
-    n_wo = rep(n_wash_vec, each=length(n_sequences))
+  }
+  ggsave(
+    filename = paste0("../Figures + Tables/fig_SSR_", which_plot, ".pdf"),
+    plot=plot, device="pdf", width=10, height=8
   )
-)
-
-# Plot component 2: Effect sizes
-effect_sizes <- seq(0.05,0.4,0.05)
-v_ratios_2 <- c()
-for (n_wash in n_wash_vec) {
-  v_ratios_2 <- c(v_ratios_2, sapply(effect_sizes, function(x) {
-    tryCatch(
-      expr = {
-        return(ss_ratio(
-          power = 0.9,
-          n_sequences = 6,
-          n_clust_per_seq = 4,
-          effect_size = x,
-          icc = 0.1,
-          n_omit = 0,
-          n_wash = n_wash
-        ))
-      },
-      error = function(e) { return(NA) }
-    )
-  }))
+  
 }
-p02 <- make_plot(
-  x_lab = "Effect size",
-  which = "n_wash",
-  data.frame(
-    x = rep(effect_sizes, length(n_wash_vec)),
-    y = v_ratios_2,
-    n_wo = rep(n_wash_vec, each=length(effect_sizes))
-  )
-)
-
-# Plot component 3: ICCs
-iccs <- c(seq(0,0.01,0.002),seq(0.02,0.2,0.01))
-v_ratios_3 <- c()
-for (n_wash in n_wash_vec) {
-  v_ratios_3 <- c(v_ratios_3, sapply(iccs, function(x) {
-    tryCatch(
-      expr = {
-        return(ss_ratio(
-          power = 0.9,
-          n_sequences = 6,
-          n_clust_per_seq = 4,
-          effect_size = 0.1,
-          icc = x,
-          n_omit = 0,
-          n_wash = n_wash
-        ))
-      },
-      error = function(e) { return(NA) }
-    )
-  }))
-}
-p03 <- make_plot(
-  x_lab = "ICC",
-  which = "n_wash",
-  data.frame(
-    x = rep(iccs, length(n_wash_vec)),
-    y = v_ratios_3,
-    n_wo = rep(n_wash_vec, each=length(iccs))
-  )
-)
-
-# Plot component 4: Clusters per sequence
-n_clust_per_seqs <- c(1:8)
-v_ratios_4 <- c()
-for (n_wash in n_wash_vec) {
-  v_ratios_4 <- c(v_ratios_4, sapply(n_clust_per_seqs, function(x) {
-    tryCatch(
-      expr = {
-        return(ss_ratio(
-          power = 0.9,
-          n_sequences = 6,
-          n_clust_per_seq = x,
-          effect_size = 0.1,
-          icc = 0.1,
-          n_omit = 0,
-          n_wash = n_wash
-        ))
-      },
-      error = function(e) { return(NA) }
-    )
-  }))
-}
-p04 <- make_plot(
-  x_lab = "# clusters per sequence",
-  which = "n_wash",
-  data.frame(
-    x = rep(n_clust_per_seqs, length(n_wash_vec)),
-    y = v_ratios_4,
-    n_wo = rep(n_wash_vec, each=length(n_clust_per_seqs))
-  )
-)
-
-# Create combined plot
-plot <- ggpubr::ggarrange(p01, p02, p03, p04, ncol=2, nrow=2)
-plot <- annotate_figure(
-  plot,
-  top = text_grob("Sample size ratio required for 90% power, TATE", size=14)
-)
-ggsave(
-  filename = "../Figures + Tables/fig_02_SSR_2.pdf",
-  plot=plot, device="pdf", width=10, height=8
-)

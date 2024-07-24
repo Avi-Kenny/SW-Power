@@ -7,12 +7,13 @@ if (cfg$run_sims && Sys.getenv("sim_run") %in% c("first", "")) {
   # Figures: ...
   level_sets[["Power set 1"]] <- list(
     data_type = "normal",
-    sigma = 1,
-    tau = 0.25,
-    n_sequences = c(6, 8, 10),
-    n_clust_per_seq = c(2,4),
-    n_ind_per_cell = 10,
-    # re = c("cluster", "cluster+time"),
+    sigma = 2,
+    # tau = 0.5,
+    icc = c(0.01,0.05,0.1),
+    n_sequences = c(5, 10, 20, 40),
+    # n_clust_per_seq = c(2,4),
+    n_clust_per_seq = 2,
+    n_ind_per_cell = 8,
     re = "cluster+time",
     estimand = c("TATE", "PTE-1", "PTE-S"),
     model = list(

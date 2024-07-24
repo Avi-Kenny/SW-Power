@@ -2,13 +2,13 @@
 cfg <- list(
   run_sims = T,
   run_it_vs_eti = F,
-  run_process = T,
+  run_process = F,
   sim_which = "Power",
   sim_level_set = "Power set 1",
   sim_run_or_update = "run",
   sim_num = 1000,
   sim_parallel = F,
-  sim_n_cores = 3,
+  sim_n_cores = 350,
   sim_stop_at_error = F
 )
 
