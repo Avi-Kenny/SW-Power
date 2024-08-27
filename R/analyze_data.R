@@ -17,7 +17,8 @@
 #' @return A list of the form list(est=0, se=0) representing the point estimate
 #'     and SE estimate
 analyze_data <- function(
-  dat, cal_time, exp_time, re, estimand_type, estimand_time, return_curve
+  dat, cal_time, exp_time, re, estimand_type, estimand_time, return_curve=F,
+  return_ses=F
 ) {
   
   if (!(cal_time %in% c("cat", "linear", "NCS"))) {
@@ -145,13 +146,13 @@ analyze_data <- function(
     }
     
     et <- estimand_time
-    if (estimand=="TATE") {
+    if (estimand_type=="TATE") {
       A <- matrix(
-        data = replace(rep(0, S-1), c(et[1]:et[2]), 1/(et[2]-et[1]+1)),
+        data = replace(rep(0, S), c(et[1]:et[2]), 1/(et[2]-et[1]+1)),
         nrow = 1
       )
-    } else if (estimand=="PTE") {
-      A <- matrix(replace(rep(0, S-1), et, 1), nrow=1)
+    } else if (estimand_type=="PTE") {
+      A <- matrix(replace(rep(0, S), et, 1), nrow=1)
     }
     est <- as.numeric(A %*% delta_s_hat)
     se <- sqrt(as.numeric(A %*% sigma_s_hat %*% t(A)))
@@ -165,6 +166,14 @@ analyze_data <- function(
       res$curve <- rep(est, S)
     } else {
       res$curve <- delta_s_hat
+    }
+  }
+  
+  if (return_ses) {
+    if (exp_time=="IT") {
+      res$curve_se <- rep(se, S)
+    } else {
+      res$curve_se <- as.numeric(sqrt(diag(sigma_s_hat)))
     }
   }
   
