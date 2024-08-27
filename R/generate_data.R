@@ -12,16 +12,25 @@
 #' @param re One of c("cluster", "cluster+time"); whether a cluster intercept
 #'     should be included ("cluster") or a cluster intercept plus a
 #'     cluster-period intercept ("cluster+time")
+#' @param n_extra_c Integer. Number of extra time points to add to the beginning
+#'     of the design (i.e., extra control periods)
+#' @param n_extra_t Integer. Number of extra time points to add to the end of
+#'     of the design (i.e., extra treatment periods)
 #' @return A dataframe representing a stepped wedge dataset
+#' @details If `n_extra_c` and/or `n_extra_t` are used, the lengths of `beta_j`
+#'     and `delta_s` should be kept the same. The first/last values of `beta_j`
+#'     and the last value of `delta_s` will be "extended" to the extra time
+#'     points.
 generate_dataset <- function(
   data_type, sigma, tau, beta_j, delta_s, n_sequences, n_clust_per_seq,
-  n_ind_per_cell, re
+  n_ind_per_cell, re, n_extra_c=0, n_extra_t=0
 ) {
   
   # Misc
   passed_args <- as.list(environment())
   I <- round(n_sequences * n_clust_per_seq)
   J <- round(n_sequences + 1)
+  js <- c((1-n_extra_c):(J+n_extra_t))
   K <- n_ind_per_cell
   i_vec <- j_vec <- k_vec <- y_ij_vec <- x_ij_vec <- s_ij_vec <- rep(NA, I*J*K)
   
@@ -41,10 +50,14 @@ generate_dataset <- function(
       alpha_i <- rnorm(n=1, mean=0, sd=tau/sqrt(2))
     }
     
-    for (j in c(1:J)) {
+    for (j in js) {
       
       x_ij <- In(j>=crossover[i])
       s_ij <- round(x_ij*(j-crossover[i]+1))
+      
+      # Modify indices to account for extra time points
+      s_ij_mod <- min(s_ij, length(delta_s))
+      j_mod <- max(min(j, J), 1)
       
       if (re=="cluster") {
         gamma_ij <- 0
@@ -55,18 +68,18 @@ generate_dataset <- function(
       if (data_type=="normal") {
         
         if (x_ij==0) {
-          mu_ij <- beta_j[j] + alpha_i + gamma_ij
+          mu_ij <- beta_j[j_mod] + alpha_i + gamma_ij
         } else if (x_ij==1) {
-          mu_ij <- beta_j[j] + alpha_i + gamma_ij + delta_s[s_ij]
+          mu_ij <- beta_j[j_mod] + alpha_i + gamma_ij + delta_s[s_ij_mod]
         }
         y_ij <- rnorm(n=K, mean=mu_ij, sd=sigma)
         
       } else if (data_type=="binomial") {
         
         if (x_ij==0) {
-          p_ij <- expit(beta_j[j] + alpha_i + gamma_ij)
+          p_ij <- expit(beta_j[j_mod] + alpha_i + gamma_ij)
         } else if (x_ij==1) {
-          p_ij <- expit(beta_j[j] + alpha_i + gamma_ij + delta_s[s_ij])
+          p_ij <- expit(beta_j[j_mod] + alpha_i + gamma_ij + delta_s[s_ij_mod])
         }
         y_ij <- rbinom(n=K, size=1, prob=p_ij)
         
@@ -89,7 +102,6 @@ generate_dataset <- function(
     "i" = i_vec,
     "j" = j_vec,
     "k" = k_vec,
-    # "c_i" = c_i_vec, # crossover time (i.e., start time of intervention)
     "y_ij" = y_ij_vec,
     "x_ij" = x_ij_vec,
     "s_ij" = s_ij_vec

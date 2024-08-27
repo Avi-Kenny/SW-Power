@@ -29,14 +29,26 @@ if (cfg$sim_which=="Power") {
       )
     })
     
+    # Parse estimand
+    if (L$estimand=="TATE") {
+      estimand_type <- "TATE"
+      estimand_time <- c(1,L$n_sequences)
+    } else if (L$estimand=="PTE-1") {
+      estimand_type <- "PTE"
+      estimand_time <- 1
+    } else if (L$estimand=="PTE-S") {
+      estimand_type <- "PTE"
+      estimand_time <- L$n_sequences
+    }
+    
     # Analyze data
     results <- analyze_data(
       dat = dat,
       cal_time = L$model$cal_time,
       exp_time = L$model$exp_time,
       re = L$re,
-      # n_omit = L$model$n_omit,
-      estimand = L$estimand,
+      estimand_type = estimand_type,
+      estimand_time = estimand_time,
       return_curve = F
     )
     

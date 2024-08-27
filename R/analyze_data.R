@@ -8,11 +8,17 @@
 #' @param re One of c("cluster", "cluster+time"); whether a cluster intercept
 #'     should be included ("cluster") or a cluster intercept plus a
 #'     cluster-period intercept ("cluster+time")
-#' @param estimand One of c("TATE", "PTE-1", "PTE-S"); the target of estimation
+#' @param estimand_type One of c("TATE", "PTE"); the target of estimation
+#' @param estimand_time An integer vector of length 1 or 2. If
+#'     `estimand_type=='TATE'`, specify a vector of length 2 corresponding to
+#'     the first and last periods of the TATE. If `estimand_type=='PTE'`,
+#'     specify an integer corresponding to the time period (j) of interest.
 #' @param return_curve Boolean; if true, the entire estimated curve is returned
 #' @return A list of the form list(est=0, se=0) representing the point estimate
 #'     and SE estimate
-analyze_data <- function(dat, cal_time, exp_time, re, estimand, return_curve) {
+analyze_data <- function(
+  dat, cal_time, exp_time, re, estimand_type, estimand_time, return_curve
+) {
   
   if (!(cal_time %in% c("cat", "linear", "NCS"))) {
     stop("`cal_time` misspecified.")
@@ -27,7 +33,7 @@ analyze_data <- function(dat, cal_time, exp_time, re, estimand, return_curve) {
   params <- attr(dat, "params")
   
   # Create exposure time variables (factors or spline basis)
-  S <- params$n_sequences
+  S <- length(unique(dat$s_ij))-1
   if (exp_time=="cat") {
     
     for (s in c(1:S)) {
@@ -98,7 +104,7 @@ analyze_data <- function(dat, cal_time, exp_time, re, estimand, return_curve) {
   } else if (exp_time %in% c("cat", "NCS")) {
     
     formula <- "y_ij ~ "
-    num_s_terms <- ifelse(exp_time=="cat", params$n_sequences, 4)
+    num_s_terms <- ifelse(exp_time=="cat", S, 4)
     for (s in c(1:num_s_terms)) { formula <- paste0(formula, "s_", s, " + ") }
     if (cal_time=="cat") {
       formula <- paste0(formula, "j_fac - 1 + ")
@@ -138,14 +144,14 @@ analyze_data <- function(dat, cal_time, exp_time, re, estimand, return_curve) {
       
     }
     
+    et <- estimand_time
     if (estimand=="TATE") {
-      n_omit <- 0 # !!!!!
-      H_len <- S - n_omit
-      A <- (1/H_len) * matrix(c(rep(1,H_len), rep(0,n_omit)), nrow=1)
-    } else if (estimand=="PTE-1") {
-      A <- matrix(c(1, rep(0,S-1)), nrow=1)
-    } else if (estimand=="PTE-S") {
-      A <- matrix(c(rep(0,S-1), 1), nrow=1)
+      A <- matrix(
+        data = replace(rep(0, S-1), c(et[1]:et[2]), 1/(et[2]-et[1]+1)),
+        nrow = 1
+      )
+    } else if (estimand=="PTE") {
+      A <- matrix(replace(rep(0, S-1), et, 1), nrow=1)
     }
     est <- as.numeric(A %*% delta_s_hat)
     se <- sqrt(as.numeric(A %*% sigma_s_hat %*% t(A)))
