@@ -4,7 +4,8 @@
 
 # Setup
 cfg2 <- list(
-  suppress_title = T
+  suppress_title = T,
+  d = format(Sys.time(), "%Y-%m-%d")
 )
 
 # Helper function to calculate power given inputs
@@ -131,22 +132,23 @@ make_plot <- function(x_lab, which_plot, df) {
   if (which_plot=="n_omit") {
     lab_col <- "# time points omitted from end"
     scale_y <- scale_y_continuous(breaks=seq(1,3,0.2), limits=c(1,3))
-    aes <- aes(x=x, y=y, color=factor(n_wo))
+    theme_ <- theme(legend.position="bottom")
   } else if (which_plot=="n_wash") {
     lab_col <- "# washout time points"
     scale_y <- scale_y_continuous(breaks=seq(1,7,0.5), limits=c(1,7.1))
-    aes <- aes(x=x, y=y, color=factor(n_wo))
+    theme_ <- theme(legend.position="bottom")
   } else if (which_plot=="basic") {
     lab_col <- ""
     scale_y <- scale_y_continuous(breaks=seq(1,3,0.2), limits=c(1,3))
-    aes <- aes(x=x, y=y)
+    theme_ <- theme(legend.position="none")
   }
-  plot <- ggplot(df, aes) +
+  plot <- ggplot(df, aes(x=x, y=y, color=factor(n_wo))) +
     geom_line() +
     geom_point() +
+    scale_color_manual(values=c("#009E73", "#56B4E9", "#CC79A7", "#E69F00")) +
     scale_y +
     labs(x=x_lab, y="ETI/IT sample size ratio", color=lab_col) +
-    theme(legend.position="bottom")
+    theme_
   return(plot)
 }
 
@@ -313,7 +315,8 @@ for (which_plot in c("basic", "n_omit", "n_wash")) {
     )
   }
   ggsave(
-    filename = paste0("../Figures + Tables/fig_SSR_", which_plot, ".pdf"),
+    filename = paste0("../Figures + Tables/", cfg2$d, " fig_SSR_", which_plot,
+                      ".pdf"),
     plot=plot, device="pdf", width=10, height=8
   )
   
