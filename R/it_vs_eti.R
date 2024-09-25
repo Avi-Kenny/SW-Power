@@ -8,43 +8,6 @@ cfg2 <- list(
   d = format(Sys.time(), "%Y-%m-%d")
 )
 
-# Helper function to calculate power given inputs
-calc_power <- function(model, n_sequences, n_clust_per_seq, n_ind_per_cell,
-                       effect_size, icc, n_omit, n_wash) {
-  
-  design <- swDsn(clusters=rep(n_clust_per_seq, n_sequences))
-  
-  if (model=="IT") {
-    H <- NULL
-  } else if (model=="ETI") {
-    H <- rep(1, n_sequences)
-    if (n_omit!=0) {
-      for (i in c(1:n_omit)) { H[round(n_sequences-(i-1))] <- 0 }
-    }
-    if (n_wash!=0) {
-      for (i in c(1:n_wash)) { H[i] <- 0 }
-    }
-  }
-  
-  power <- suppressWarnings({
-    swPwr(
-      design = design,
-      distn = "gaussian",
-      n = n_ind_per_cell,
-      mu0 = 0,
-      mu1 = effect_size,
-      H = H,
-      sigma = 1,
-      icc = icc,
-      # cac = L$cac,
-      alpha = 0.05
-    )
-  })
-
-  return(as.numeric(power))
-  
-}
-
 # Function to calculate sample size corresponding to desired power
 calc_ss <- function(power, model, n_sequences, n_clust_per_seq, effect_size,
                     icc, n_omit, n_wash) {
@@ -129,6 +92,7 @@ ss_ratio <- function(power, n_sequences, n_clust_per_seq, effect_size, icc,
 
 # Plotting function
 make_plot <- function(x_lab, which_plot, df) {
+  
   if (which_plot=="n_omit") {
     lab_col <- "# time points omitted from end"
     scale_y <- scale_y_continuous(breaks=seq(1,3,0.2), limits=c(1,3))
@@ -141,7 +105,15 @@ make_plot <- function(x_lab, which_plot, df) {
     lab_col <- ""
     scale_y <- scale_y_continuous(breaks=seq(1,3,0.2), limits=c(1,3))
     theme_ <- theme(legend.position="none")
+  } else if (which_plot=="pte") {
+    lab_col <- "s, PTE(s)"
+    scale_y <- scale_y_continuous(breaks=c(1:12), limits=c(1,12.5))
+    theme_ <- theme(legend.position="bottom")
+    df %<>% dplyr::mutate(
+      n_wo = pmax(2*n_wo,1) # Converts from c(0,1,2,3) to PTE scale c(1,2,4,6)
+    )
   }
+  
   plot <- ggplot(df, aes(x=x, y=y, color=factor(n_wo))) +
     geom_line() +
     geom_point() +
@@ -149,7 +121,9 @@ make_plot <- function(x_lab, which_plot, df) {
     scale_y +
     labs(x=x_lab, y="ETI/IT sample size ratio", color=lab_col) +
     theme_
+  
   return(plot)
+  
 }
 
 
@@ -158,151 +132,141 @@ make_plot <- function(x_lab, which_plot, df) {
 ##### Plot: SSR #####
 #####################.
 
-for (which_plot in c("basic", "n_omit", "n_wash")) {
+# for (which_plot in c("basic", "n_omit", "n_wash", "pte")) {
+for (which_plot in c("pte")) {
   
   if (which_plot=="basic") {
-    vec_vary <- 0
-    n_omit_vec <- 0
-    n_wash_vec <- 0
+    ow_vec <- list(c(0,0))
   } else if (which_plot=="n_omit") {
-    vec_vary <- c(0:3)
-    n_omit_vec <- vec_vary
-    n_wash_vec <- 0
+    ow_vec <- list(c(0,0), c(1,0), c(2,0), c(3,0))
   } else if (which_plot=="n_wash") {
-    vec_vary <- c(0:3)
-    n_omit_vec <- 0
-    n_wash_vec <- vec_vary
+    ow_vec <- list(c(0,0), c(0,1), c(0,2), c(0,3))
+  } else if (which_plot=="pte") {
+    ow_vec <- list(c(5,0), c(4,1), c(2,3), c(0,5))
   }
   
   # Plot component 1: Sequences
   n_sequences <- c(2:10)
   v_ratios_1 <- c()
-  for (n_omit in n_omit_vec) {
-    for (n_wash in n_wash_vec) {
-      v_ratios_1 <- c(v_ratios_1, sapply(n_sequences, function(x) {
-        tryCatch(
-          expr = {
-            return(ss_ratio(
-              power = 0.9,
-              n_sequences = x,
-              n_clust_per_seq = 4,
-              effect_size = 0.1,
-              icc = 0.1,
-              n_omit = n_omit,
-              n_wash = n_wash
-            ))
-          },
-          error = function(e) { return(NA) }
-        )
-      }))
-    }
+  for (ow in ow_vec) {
+    v_ratios_1 <- c(v_ratios_1, sapply(n_sequences, function(x) {
+      if (which_plot=="pte") { ow[1] <- x-(ow[2]+1) } # Hack to get PTE plot to work correctly
+      tryCatch(
+        expr = {
+          return(ss_ratio(
+            power = 0.9,
+            n_sequences = x,
+            n_clust_per_seq = 4,
+            effect_size = 0.1,
+            icc = 0.1,
+            n_omit = ow[1],
+            n_wash = ow[2]
+          ))
+        },
+        error = function(e) { return(NA) }
+      )
+    }))
   }
   p01 <- make_plot(
     x_lab = "# sequences",
     which_plot = which_plot,
     df = data.frame(
-      x = rep(n_sequences, length(vec_vary)),
+      x = rep(n_sequences, length(ow_vec)),
       y = v_ratios_1,
-      n_wo = rep(vec_vary, each=length(n_sequences))
+      n_wo = rep(c(1:length(ow_vec))-1, each=length(n_sequences))
     )
   )
   
   # Plot component 2: Effect sizes
   effect_sizes <- seq(0.05,0.4,0.05)
   v_ratios_2 <- c()
-  for (n_omit in n_omit_vec) {
-    for (n_wash in n_wash_vec) {
-      v_ratios_2 <- c(v_ratios_2, sapply(effect_sizes, function(x) {
-        tryCatch(
-          expr = {
-            return(ss_ratio(
-              power = 0.9,
-              n_sequences = 6,
-              n_clust_per_seq = 4,
-              effect_size = x,
-              icc = 0.1,
-              n_omit = n_omit,
-              n_wash = n_wash
-            ))
-          },
-          error = function(e) { return(NA) }
-        )
-      }))
-    }
+  for (ow in ow_vec) {
+    v_ratios_2 <- c(v_ratios_2, sapply(effect_sizes, function(x) {
+      tryCatch(
+        expr = {
+          return(ss_ratio(
+            power = 0.9,
+            n_sequences = 6,
+            n_clust_per_seq = 4,
+            effect_size = x,
+            icc = 0.1,
+            n_omit = ow[1],
+            n_wash = ow[2]
+          ))
+        },
+        error = function(e) { return(NA) }
+      )
+    }))
   }
   p02 <- make_plot(
     x_lab = "Effect size",
     which_plot = which_plot,
     df = data.frame(
-      x = rep(effect_sizes, length(vec_vary)),
+      x = rep(effect_sizes, length(ow_vec)),
       y = v_ratios_2,
-      n_wo = rep(vec_vary, each=length(effect_sizes))
+      n_wo = rep(c(1:length(ow_vec))-1, each=length(effect_sizes))
     )
   )
   
   # Plot component 3: ICCs
   iccs <- c(seq(0,0.01,0.002),seq(0.02,0.2,0.01))
   v_ratios_3 <- c()
-  for (n_omit in n_omit_vec) {
-    for (n_wash in n_wash_vec) {
-      v_ratios_3 <- c(v_ratios_3, sapply(iccs, function(x) {
-        tryCatch(
-          expr = {
-            return(ss_ratio(
-              power = 0.9,
-              n_sequences = 6,
-              n_clust_per_seq = 4,
-              effect_size = 0.1,
-              icc = x,
-              n_omit = n_omit,
-              n_wash = n_wash
-            ))
-          },
-          error = function(e) { return(NA) }
-        )
-      }))
-    }
+  for (ow in ow_vec) {
+    v_ratios_3 <- c(v_ratios_3, sapply(iccs, function(x) {
+      tryCatch(
+        expr = {
+          return(ss_ratio(
+            power = 0.9,
+            n_sequences = 6,
+            n_clust_per_seq = 4,
+            effect_size = 0.1,
+            icc = x,
+            n_omit = ow[1],
+            n_wash = ow[2]
+          ))
+        },
+        error = function(e) { return(NA) }
+      )
+    }))
   }
   p03 <- make_plot(
     x_lab = "ICC",
     which_plot = which_plot,
     df = data.frame(
-      x = rep(iccs, length(vec_vary)),
+      x = rep(iccs, length(ow_vec)),
       y = v_ratios_3,
-      n_wo = rep(vec_vary, each=length(iccs))
+      n_wo = rep(c(1:length(ow_vec))-1, each=length(iccs))
     )
   )
   
   # Plot component 4: Clusters per sequence
   n_clust_per_seqs <- c(1:8)
   v_ratios_4 <- c()
-  for (n_omit in n_omit_vec) {
-    for (n_wash in n_wash_vec) {
-      v_ratios_4 <- c(v_ratios_4, sapply(n_clust_per_seqs, function(x) {
-        tryCatch(
-          expr = {
-            return(ss_ratio(
-              power = 0.9,
-              n_sequences = 6,
-              n_clust_per_seq = x,
-              effect_size = 0.1,
-              icc = 0.1,
-              n_omit = n_omit,
-              n_wash = n_wash
-            ))
-          },
-          error = function(e) { return(NA) }
-        )
-      }))
-    }
+  for (ow in ow_vec) {
+    v_ratios_4 <- c(v_ratios_4, sapply(n_clust_per_seqs, function(x) {
+      tryCatch(
+        expr = {
+          return(ss_ratio(
+            power = 0.9,
+            n_sequences = 6,
+            n_clust_per_seq = x,
+            effect_size = 0.1,
+            icc = 0.1,
+            n_omit = ow[1],
+            n_wash = ow[2]
+          ))
+        },
+        error = function(e) { return(NA) }
+      )
+    }))
   }
   p04 <- make_plot(
     x_lab = "# clusters per sequence",
     which_plot = which_plot,
     df = data.frame(
-      x = rep(n_clust_per_seqs, length(vec_vary)),
+      x = rep(n_clust_per_seqs, length(ow_vec)),
       y = v_ratios_4,
-      n_wo = rep(vec_vary, each=length(n_clust_per_seqs))
+      n_wo = rep(c(1:length(ow_vec))-1, each=length(n_clust_per_seqs))
     )
   )
   
