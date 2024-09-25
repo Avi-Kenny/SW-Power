@@ -2,6 +2,7 @@
 cfg <- list(
   run_sims = T,
   run_it_vs_eti = F,
+  run_extra_time = F,
   run_process = F,
   sim_which = "Power",
   sim_level_set = "Power set 1",
@@ -32,6 +33,9 @@ if (cfg$run_sims) { source("R/run.R", local=T) }
 
 # Run IT vs. ETI comparison (based on power calculator)
 if (cfg$run_it_vs_eti) { source("R/it_vs_eti.R", local=T) }
+
+# Run IT vs. ETI comparison (based on power calculator)
+if (cfg$run_extra_time) { source("R/extra_time.R", local=T) }
 
 # Tables and figures
 if (cfg$run_process) { source("R/process.R", local=T) }

@@ -1,4 +1,235 @@
 
+# New simulation to test bizarre issue around extra time points
+if (F) {
+  
+  sim <- new_sim()
+  sim %<>% set_levels(
+    case = c("base", "add_3_c", "add_3_t")
+    # case = c("base", "add_1_c", "add_1_t", "add_3_c", "add_3_t")
+  )
+  sim %<>% set_config(num_sim=1000)
+  sim %<>% set_script(function() {
+    
+    if (L$case=="base") {
+      n_extra_c=0; n_extra_t=0;
+    } else if (L$case=="add_1_c") {
+      n_extra_c=1; n_extra_t=0;
+    } else if (L$case=="add_1_t") {
+      n_extra_c=0; n_extra_t=1;
+    } else if (L$case=="add_3_c") {
+      n_extra_c=3; n_extra_t=0;
+    } else if (L$case=="add_3_t") {
+      n_extra_c=0; n_extra_t=3;
+    }
+    
+    dat <- generate_dataset(
+      data_type = "normal",
+      sigma = 1,
+      tau = sqrt(0.1/0.9),
+      # tau = 0,
+      beta_j = rep(0, 5),
+      delta_s = rep(0.2, 4),
+      n_sequences = 4,
+      n_clust_per_seq = 4,
+      n_ind_per_cell = 30,
+      re = "cluster",
+      n_extra_c = n_extra_c,
+      n_extra_t = n_extra_t
+    )
+    
+    res <- analyze_data(
+      dat = dat,
+      cal_time = "cat",
+      exp_time = "cat",
+      re = "cluster",
+      estimand_type = "TATE",
+      estimand_time = c(1,4),
+      return_curve = F,
+      return_ses = T
+    )
+    
+    ci <- res$est + c(-1,1)*qnorm(1-0.05/2)*res$se
+    reject <- In(ci[1]>0 || ci[2]<0)
+    
+    return (list(
+      "est" = res$est,
+      "se" = res$se,
+      "reject" = reject,
+      "se_curve_1" = res$curve_se[1],
+      "se_curve_4" = res$curve_se[4]
+    ))
+    
+  })
+  sim %<>% run()
+  
+  print(SimEngine::summarize(
+    sim,
+    list(stat="mean", x="reject", name="power"),
+    list(stat="mean", x="se"),
+    list(stat="mean", x="se_curve_1"),
+    list(stat="mean", x="se_curve_4")
+  ))
+  #   level_id    case n_reps power
+  # 1        1    base   1000 0.430
+  # 2        2 add_1_c   1000 0.550
+  # 3        3 add_1_t   1000 0.482
+  
+  # swCRTdesign power estimates
+  # Base: 42.6%
+  # Add 1 C: 52.5%
+  # Add 1 T: 44.2%
+  # Add 3 C: 63.3%
+  # Add 3 T: 44.5%
+  
+}
+
+# New simulation to test bizarre issue around extra time points (smaller design)
+if (F) {
+  
+  sim <- new_sim()
+  sim %<>% set_levels(
+    case = c("base", "add_1_c", "add_1_t")
+  )
+  sim %<>% set_config(num_sim=1000)
+  sim %<>% set_script(function() {
+    
+    if (L$case=="base") {
+      n_extra_c=0; n_extra_t=0;
+    } else if (L$case=="add_1_c") {
+      n_extra_c=1; n_extra_t=0;
+    } else if (L$case=="add_1_t") {
+      n_extra_c=0; n_extra_t=1;
+    }
+    
+    dat <- generate_dataset(
+      data_type = "normal",
+      sigma = 1,
+      tau = sqrt(0.1/0.9),
+      # tau = 0,
+      beta_j = rep(0, 3),
+      delta_s = rep(0.2, 2),
+      n_sequences = 2,
+      n_clust_per_seq = 4,
+      n_ind_per_cell = 30,
+      re = "cluster",
+      n_extra_c = n_extra_c,
+      n_extra_t = n_extra_t
+    )
+    
+    res <- analyze_data(
+      dat = dat,
+      cal_time = "cat",
+      exp_time = "cat",
+      re = "cluster",
+      estimand_type = "TATE",
+      estimand_time = c(1,2),
+      return_curve = F,
+      return_ses = T
+    )
+    
+    ci <- res$est + c(-1,1)*qnorm(1-0.05/2)*res$se
+    reject <- In(ci[1]>0 || ci[2]<0)
+    
+    return (list(
+      "est" = res$est,
+      "se" = res$se,
+      "reject" = reject,
+      "se_curve_1" = res$curve_se[1],
+      "se_curve_2" = res$curve_se[2]
+    ))
+    
+  })
+  sim %<>% run()
+
+  print(SimEngine::summarize(
+    sim,
+    list(stat="mean", x="reject", name="power"),
+    list(stat="mean", x="se"),
+    list(stat="mean", x="se_curve_1"),
+    list(stat="mean", x="se_curve_2")
+  ))
+  
+  #   level_id    case n_reps  power   mean_se mean_se_curve_1 mean_se_curve_2
+  # 1        1    base  10000 0.1672 0.2175115       0.1686696       0.2835353
+  # 2        2 add_1_c  10000 0.1935 0.1904643       0.1534062       0.2465464
+  # 3        3 add_1_t  10000 0.1606 0.2180981       0.1690114       0.2843349
+  
+}
+
+
+# New simulation to test bizarre issue around extra time points (large design)
+if (T) {
+  
+  sim <- new_sim()
+  sim %<>% set_levels(
+    case = c("base", "add_3_c", "add_3_t")
+  )
+  sim %<>% set_config(num_sim=1000)
+  sim %<>% set_script(function() {
+    
+    if (L$case=="base") {
+      n_extra_c=0; n_extra_t=0;
+    } else if (L$case=="add_3_c") {
+      n_extra_c=3; n_extra_t=0;
+    } else if (L$case=="add_3_t") {
+      n_extra_c=0; n_extra_t=3;
+    }
+    
+    dat <- generate_dataset(
+      data_type = "normal",
+      sigma = 1,
+      tau = sqrt(0.1/0.9),
+      # tau = 0,
+      beta_j = rep(0, 8),
+      delta_s = rep(0.2, 7),
+      n_sequences = 7,
+      n_clust_per_seq = 2,
+      n_ind_per_cell = 30,
+      re = "cluster",
+      n_extra_c = n_extra_c,
+      n_extra_t = n_extra_t
+    )
+    
+    res <- analyze_data(
+      dat = dat,
+      cal_time = "cat",
+      exp_time = "cat",
+      re = "cluster",
+      estimand_type = "TATE",
+      estimand_time = c(1,7),
+      return_curve = F,
+      return_ses = T
+    )
+    
+    ci <- res$est + c(-1,1)*qnorm(1-0.05/2)*res$se
+    reject <- In(ci[1]>0 || ci[2]<0)
+    
+    return (list(
+      "est" = res$est,
+      "se" = res$se,
+      "reject" = reject,
+      "se_curve_1" = res$curve_se[1],
+      "se_curve_2" = res$curve_se[2]
+    ))
+    
+  })
+  sim %<>% run()
+  
+  print(SimEngine::summarize(
+    sim,
+    list(stat="mean", x="reject", name="power"),
+    list(stat="mean", x="se"),
+    list(stat="mean", x="se_curve_1"),
+    list(stat="mean", x="se_curve_2")
+  ))
+  
+  #   level_id    case n_reps power    mean_se mean_se_curve_1 mean_se_curve_2
+  # 1        1    base   1000 0.544 0.09605261      0.06900267      0.08025247
+  # 2        2 add_3_c   1000 0.730 0.07668250      0.06374699      0.07220469
+  # 3        3 add_3_t   1000 0.576 0.09230057      0.06871098      0.07849939
+  
+}
+
 # Testing out time trend function
 if (F) {
   
