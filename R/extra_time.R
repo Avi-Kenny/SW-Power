@@ -115,7 +115,7 @@ plot_2 <- ggplot(df_plot_2, aes(x=time, y=power, color=which)) +
 ggsave(
   filename = paste0("../Figures + Tables/", cfg2$d,
                     " fig_power_extra_time_tate_cac.pdf"),
-  plot=plot_2, device="pdf", width=9, height=5
+  plot=plot_2, device="pdf", width=9, height=6
 )
 
 df_1 <- create_df(iccs=0.1, cacs=1, effect_sizes=0.195)
@@ -137,7 +137,7 @@ plot_3 <- ggplot(df_plot_3, aes(x=time, y=power, color=which)) +
   scale_y_continuous(
     labels = scales::percent,
     limits = c(0.6,1),
-    breaks = seq(0.2,1,0.2)
+    breaks = seq(0.2,1,0.1)
   ) +
   facet_grid(cols=dplyr::vars(scenario)) +
   labs(
@@ -150,7 +150,7 @@ plot_3 <- ggplot(df_plot_3, aes(x=time, y=power, color=which)) +
 ggsave(
   filename = paste0("../Figures + Tables/", cfg2$d,
                     " fig_power_extra_time_tate_cac2.pdf"),
-  plot=plot_3, device="pdf", width=9, height=5
+  plot=plot_3, device="pdf", width=9, height=4
 )
 
 

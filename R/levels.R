@@ -9,7 +9,7 @@ if (cfg$run_sims && Sys.getenv("sim_run") %in% c("first", "")) {
     data_type = "normal",
     sigma = 2,
     # tau = 0.5,
-    icc = c(0.01,0.05,0.1),
+    icc = c(0.01,0.1),
     n_sequences = c(5, 10, 20, 40),
     # n_clust_per_seq = c(2,4),
     n_clust_per_seq = 2,

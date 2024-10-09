@@ -10,6 +10,7 @@ summ <- SimEngine::summarize(sim,
   # list(stat="sd", x="est"),
   # list(stat="coverage", estimate="est", se="se", truth="true_tate", name="cov")
 )
+if (sim$config$seed==764437398) { summ %<>% dplyr::filter(icc!=0.05) } # !!!!! TEMP
 
 summ %<>% dplyr::mutate(
   # n_clust_per_seq = paste0(n_clust_per_seq, " clusters / seq"),
@@ -20,7 +21,6 @@ summ %<>% dplyr::mutate(
 plot <- ggplot(summ, aes(x=n_sequences, y=power, color=model)) +
   geom_line() +
   geom_point() +
-  # facet_grid(rows=dplyr::vars(n_clust_per_seq), cols=dplyr::vars(estimand)) +
   facet_grid(rows=dplyr::vars(icc), cols=dplyr::vars(estimand)) +
   scale_y_continuous(
     breaks = seq(0,1,0.2),
@@ -28,10 +28,12 @@ plot <- ggplot(summ, aes(x=n_sequences, y=power, color=model)) +
     labels=scales::percent
   ) +
   labs(y="Power", x="Number of sequences", color="Model") +
+  scale_color_manual(values=c("#009E73", "#56B4E9", "#CC79A7", "#E69F00")) +
   theme(legend.position="bottom")
 
 ggsave(
-  filename = "../Figures + Tables/fig_models.pdf",
+  filename = paste0("../Figures + Tables/", cfg2$d,
+                    " fig_models.pdf"),
   plot=plot, device="pdf", width=7, height=5
 )
 
