@@ -20,6 +20,7 @@ calc_ss <- function(power, model, n_sequences, n_clust_per_seq, effect_size,
       n_ind_per_cell = n,
       effect_size = effect_size,
       icc = icc,
+      cac = 1,
       n_omit = n_omit,
       n_wash = n_wash
     )

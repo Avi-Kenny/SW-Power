@@ -31,7 +31,7 @@ expit <- function(x) {1/(exp(-x)+1)}
 
 # Helper function to calculate power given inputs
 calc_power <- function(model, n_sequences, n_clust_per_seq, n_ind_per_cell,
-                       effect_size, icc, n_omit, n_wash, n_extra_c=0,
+                       effect_size, icc, cac, n_omit, n_wash, n_extra_c=0,
                        n_extra_t=0) {
   
   design <- swDsn(
@@ -63,7 +63,7 @@ calc_power <- function(model, n_sequences, n_clust_per_seq, n_ind_per_cell,
       H = H,
       sigma = 1,
       icc = icc,
-      # cac = 1,
+      cac = cac,
       alpha = 0.05
     )
   })
