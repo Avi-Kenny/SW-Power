@@ -2,7 +2,7 @@
 ##### Summarize simulation results #####
 ########################################.
 
-sim <- readRDS("SimEngine.out/power_1_20240628.rds")
+sim <- readRDS("SimEngine.out/power_1_20240724.rds")
 
 summ <- SimEngine::summarize(sim,
   list(stat="mean", x="reject", name="power")
