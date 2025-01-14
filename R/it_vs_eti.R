@@ -10,7 +10,7 @@ cfg2 <- list(
 
 # Function to calculate sample size corresponding to desired power
 calc_ss <- function(power, model, n_sequences, n_clust_per_seq, effect_size,
-                    icc, n_omit, n_wash) {
+                    icc, n_omit, n_wash, staircase=F, n_before_and_after=NA) {
   
   power_n <- function(n) {
     calc_power(
@@ -22,7 +22,9 @@ calc_ss <- function(power, model, n_sequences, n_clust_per_seq, effect_size,
       icc = icc,
       cac = 1,
       n_omit = n_omit,
-      n_wash = n_wash
+      n_wash = n_wash,
+      staircase = staircase,
+      n_before_and_after = n_before_and_after
     )
   }
   
@@ -63,7 +65,7 @@ calc_ss <- function(power, model, n_sequences, n_clust_per_seq, effect_size,
 
 # Function to calculate sample size ratio (ETI:IT)
 ss_ratio <- function(power, n_sequences, n_clust_per_seq, effect_size, icc,
-                     n_omit, n_wash) {
+                     n_omit, n_wash, staircase=F, n_before_and_after=NA) {
   
   ss_it <- calc_ss(
     power = power,
@@ -73,7 +75,9 @@ ss_ratio <- function(power, n_sequences, n_clust_per_seq, effect_size, icc,
     effect_size = effect_size,
     icc = icc,
     n_omit = n_omit,
-    n_wash = n_wash
+    n_wash = n_wash,
+    staircase = staircase,
+    n_before_and_after = n_before_and_after
   )
   
   ss_eti <- calc_ss(
@@ -84,7 +88,9 @@ ss_ratio <- function(power, n_sequences, n_clust_per_seq, effect_size, icc,
     effect_size = effect_size,
     icc = icc,
     n_omit = n_omit,
-    n_wash = n_wash
+    n_wash = n_wash,
+    staircase = staircase,
+    n_before_and_after = n_before_and_after
   )
   
   return(ss_eti$n/ss_it$n)
@@ -133,8 +139,8 @@ make_plot <- function(x_lab, which_plot, df) {
 ##### Plot: SSR #####
 #####################.
 
-# for (which_plot in c("basic", "n_omit", "n_wash", "pte")) {
-for (which_plot in c("pte")) {
+for (which_plot in c("basic", "n_omit", "n_wash", "pte")) {
+# for (which_plot in c("pte")) {
   
   if (which_plot=="basic") {
     ow_vec <- list(c(0,0))
@@ -159,7 +165,7 @@ for (which_plot in c("pte")) {
             n_sequences = x,
             n_clust_per_seq = 4,
             effect_size = 0.1,
-            icc = 0.1,
+            icc = 0.05,
             n_omit = ow[1],
             n_wash = ow[2]
           ))
@@ -190,7 +196,7 @@ for (which_plot in c("pte")) {
             n_sequences = 6,
             n_clust_per_seq = 4,
             effect_size = x,
-            icc = 0.1,
+            icc = 0.05,
             n_omit = ow[1],
             n_wash = ow[2]
           ))
@@ -252,7 +258,7 @@ for (which_plot in c("pte")) {
             n_sequences = 6,
             n_clust_per_seq = x,
             effect_size = 0.1,
-            icc = 0.1,
+            icc = 0.05,
             n_omit = ow[1],
             n_wash = ow[2]
           ))
@@ -286,3 +292,21 @@ for (which_plot in c("pte")) {
   )
   
 }
+
+
+
+##################################.
+##### Plot: Staircase design #####
+##################################.
+
+ss_ratio(
+  power = 0.9,
+  n_sequences = 4,
+  n_clust_per_seq = 4,
+  effect_size = 0.1,
+  icc = 0.05,
+  n_omit = 0,
+  n_wash = 0,
+  staircase = T,
+  n_before_and_after = 1
+)

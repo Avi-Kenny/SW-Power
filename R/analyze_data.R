@@ -1,4 +1,4 @@
-#' Generate one stepped wedge dataset
+#' Analyze stepped wedge dataset
 #'
 #' @param dat A dataset returned by generate_data()
 #' @param cal_time One of c("cat", "linear", "NCS"); how the secular

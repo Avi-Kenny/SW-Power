@@ -1,8 +1,9 @@
 # Main config
 cfg <- list(
-  run_sims = T,
-  run_it_vs_eti = F,
-  run_extra_time = F,
+  run_sims = F,
+  run_it_vs_eti = T,
+  run_extra_time = T,
+  run_unequal_alloc = F,
   run_process = F,
   sim_which = "Power",
   sim_level_set = "Power set 1",
@@ -23,6 +24,7 @@ source("R/config.R", local=T)
   source("R/one_simulation.R", local=T)
   source("R/generate_data.R", local=T)
   source("R/analyze_data.R", local=T)
+  source("../Misc/swPwr.r") # !!!!! Temporary until swCRTdesign is updated
 }
 
 # Set level sets
@@ -36,6 +38,9 @@ if (cfg$run_it_vs_eti) { source("R/it_vs_eti.R", local=T) }
 
 # Run IT vs. ETI comparison (based on power calculator)
 if (cfg$run_extra_time) { source("R/extra_time.R", local=T) }
+
+# Run IT vs. ETI comparison (based on power calculator)
+if (cfg$run_unequal_alloc) { source("R/unequal_alloc.R", local=T) }
 
 # Tables and figures
 if (cfg$run_process) { source("R/process.R", local=T) }

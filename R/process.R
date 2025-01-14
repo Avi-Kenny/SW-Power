@@ -18,6 +18,11 @@ summ %<>% dplyr::mutate(
   estimand = factor(estimand, levels=c("TATE", "PTE-1", "PTE-S"))
 )
 
+# Jitter "ETI cat cal" points
+summ %<>% dplyr::mutate(
+  power = ifelse(model=="ETI, linear cal time", power+0.01, power)
+)
+
 plot <- ggplot(summ, aes(x=n_sequences, y=power, color=model)) +
   geom_line() +
   geom_point() +

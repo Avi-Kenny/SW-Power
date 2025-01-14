@@ -1,4 +1,50 @@
 
+# Debugging staircase design
+if (T) {
+  
+  n_clust_per_seq <- 4
+  n_sequences <- 4
+  n_ind_per_cell <- 10^2
+  n_before_and_after <- 1
+  design <- swDsn(
+    clusters = rep(n_clust_per_seq, n_sequences),
+    extra.ctl.time = n_before_and_after-1,
+    extra.trt.time = n_before_and_after-1
+  )
+  n_row <- nrow(design$swDsn)
+  n_col <- ncol(design$swDsn)
+  n_matrix <- matrix(NA, nrow=n_row, ncol=n_col)
+  
+  for (row in c(1:n_row)) {
+    vec <- design$swDsn[row,]
+    first_tx <- which.max(vec==1)
+    n_vals <- rep(0, n_col)
+    ind_1 <- first_tx-n_before_and_after
+    ind_2 <- first_tx+n_before_and_after-1
+    n_vals[ind_1:ind_2] <- n_ind_per_cell
+    n_matrix[row,] <- n_vals
+  }
+  
+  # print(design$swDsn)
+  # print(n_matrix)
+  
+  power <- swPwr(
+    design = design,
+    distn = "gaussian",
+    n = n_matrix,
+    # n = n_ind_per_cell,
+    mu0 = 0,
+    mu1 = 0.1,
+    # H = H,
+    sigma = 1,
+    icc = 0.05,
+    cac = 1,
+    alpha = 0.05
+  )
+  print(paste("Power:", round(power,2)))
+  
+}
+
 # New simulation to test bizarre issue around extra time points
 if (F) {
   

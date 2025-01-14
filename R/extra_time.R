@@ -17,8 +17,8 @@ create_df <- function(iccs, cacs, effect_sizes) {
     "time" = integer(),
     "power" = double(),
     "which" = character(),
-    "icc" = double(),
-    "cac" = double(),
+    "icc" = character(),
+    "cac" = character(),
     "effect_size" = double()
   )
   
@@ -48,7 +48,7 @@ create_df <- function(iccs, cacs, effect_sizes) {
                    "Extra treatment time (end of design)"),
             paste0("ICC: ", icc),
             paste0("CAC: ", cac),
-            paste0("Eff. size: ", effect_size)
+            effect_size
           )
           
         }
@@ -62,7 +62,8 @@ create_df <- function(iccs, cacs, effect_sizes) {
 
 # Generate plot 1 (CAC not varied)
 df_plot_1 <- create_df(
-  iccs = c(0, 0.005, 0.01, 0.1, 0.2),
+  # iccs = c(0, 0.005, 0.01, 0.1, 0.2),
+  iccs = c(0, 0.005, 0.01, 0.05, 0.1),
   cacs = 1,
   effect_sizes = 0.15
 )
@@ -91,9 +92,12 @@ ggsave(
 
 # Generate plot 2 (CAC, eff_size varied)
 df_plot_2 <- create_df(
-  iccs = c(0.1),
+  iccs = c(0.05),
   cacs = c(0.5,0.75,1),
-  effect_sizes = c(0.15,0.2,0.25,0.3)
+  effect_sizes = c(0.1,0.15,0.2,0.25)
+)
+df_plot_2 %<>% dplyr::mutate(
+  effect_size = paste0("Eff. size: ", format(effect_size, nsmall=2))
 )
 plot_2 <- ggplot(df_plot_2, aes(x=time, y=power, color=which)) +
   geom_line() +
@@ -118,18 +122,23 @@ ggsave(
   plot=plot_2, device="pdf", width=9, height=6
 )
 
-df_1 <- create_df(iccs=0.1, cacs=1, effect_sizes=0.195)
-df_2 <- create_df(iccs=0.1, cacs=0.75, effect_sizes=0.249)
-df_3 <- create_df(iccs=0.1, cacs=0.5, effect_sizes=0.277)
-df_4 <- create_df(iccs=0.1, cacs=0.25, effect_sizes=0.277)
+# Baseline power
+# calc_power(model="ETI", n_sequences=6, n_clust_per_seq=4, n_ind_per_cell=30, effect_size=0.210, icc=0.05, cac=0.25, n_omit=0, n_wash=0, n_extra_c=0, n_extra_t=0)
+df_1 <- create_df(iccs=0.05, cacs=1, effect_sizes=0.187)
+df_2 <- create_df(iccs=0.05, cacs=0.75, effect_sizes=0.208)
+df_3 <- create_df(iccs=0.05, cacs=0.5, effect_sizes=0.217)
+df_4 <- create_df(iccs=0.05, cacs=0.25, effect_sizes=0.210)
 df_plot_3 <- rbind(df_1,df_2,df_3,df_4)
-df_plot_3 %<>% dplyr::mutate(scenario = factor(
-  paste0(cac, "; ", effect_size),
-  levels = c("CAC: 1; Eff. size: 0.195",
-             "CAC: 0.75; Eff. size: 0.249",
-             "CAC: 0.5; Eff. size: 0.277",
-             "CAC: 0.25; Eff. size: 0.277")
-))
+df_plot_3 %<>% dplyr::mutate(
+  effect_size = paste0("Eff. size: ", format(effect_size, nsmall=3)),
+  scenario = factor(
+    paste0(cac, "; ", effect_size),
+    levels = c("CAC: 1; Eff. size: 0.187",
+             "CAC: 0.75; Eff. size: 0.208",
+             "CAC: 0.5; Eff. size: 0.217",
+             "CAC: 0.25; Eff. size: 0.210")
+  )
+)
 plot_3 <- ggplot(df_plot_3, aes(x=time, y=power, color=which)) +
   geom_line() +
   geom_point() +
@@ -152,9 +161,3 @@ ggsave(
                     " fig_power_extra_time_tate_cac2.pdf"),
   plot=plot_3, device="pdf", width=9, height=4
 )
-
-
-
-
-
-
