@@ -184,36 +184,36 @@ for (which_plot in c("basic", "n_omit", "n_wash", "pte")) {
     )
   )
   
-  # Plot component 2: Effect sizes
-  effect_sizes <- seq(0.05,0.4,0.05)
-  v_ratios_2 <- c()
-  for (ow in ow_vec) {
-    v_ratios_2 <- c(v_ratios_2, sapply(effect_sizes, function(x) {
-      tryCatch(
-        expr = {
-          return(ss_ratio(
-            power = 0.9,
-            n_sequences = 6,
-            n_clust_per_seq = 4,
-            effect_size = x,
-            icc = 0.05,
-            n_omit = ow[1],
-            n_wash = ow[2]
-          ))
-        },
-        error = function(e) { return(NA) }
-      )
-    }))
-  }
-  p02 <- make_plot(
-    x_lab = "Effect size",
-    which_plot = which_plot,
-    df = data.frame(
-      x = rep(effect_sizes, length(ow_vec)),
-      y = v_ratios_2,
-      n_wo = rep(c(1:length(ow_vec))-1, each=length(effect_sizes))
-    )
-  )
+  # # Plot component 2: Effect sizes
+  # effect_sizes <- seq(0.05,0.4,0.05)
+  # v_ratios_2 <- c()
+  # for (ow in ow_vec) {
+  #   v_ratios_2 <- c(v_ratios_2, sapply(effect_sizes, function(x) {
+  #     tryCatch(
+  #       expr = {
+  #         return(ss_ratio(
+  #           power = 0.9,
+  #           n_sequences = 6,
+  #           n_clust_per_seq = 4,
+  #           effect_size = x,
+  #           icc = 0.05,
+  #           n_omit = ow[1],
+  #           n_wash = ow[2]
+  #         ))
+  #       },
+  #       error = function(e) { return(NA) }
+  #     )
+  #   }))
+  # }
+  # p02 <- make_plot(
+  #   x_lab = "Effect size",
+  #   which_plot = which_plot,
+  #   df = data.frame(
+  #     x = rep(effect_sizes, length(ow_vec)),
+  #     y = v_ratios_2,
+  #     n_wo = rep(c(1:length(ow_vec))-1, each=length(effect_sizes))
+  #   )
+  # )
   
   # Plot component 3: ICCs
   iccs <- c(seq(0,0.01,0.002),seq(0.02,0.2,0.01))
@@ -246,39 +246,40 @@ for (which_plot in c("basic", "n_omit", "n_wash", "pte")) {
     )
   )
   
-  # Plot component 4: Clusters per sequence
-  n_clust_per_seqs <- c(1:8)
-  v_ratios_4 <- c()
-  for (ow in ow_vec) {
-    v_ratios_4 <- c(v_ratios_4, sapply(n_clust_per_seqs, function(x) {
-      tryCatch(
-        expr = {
-          return(ss_ratio(
-            power = 0.9,
-            n_sequences = 6,
-            n_clust_per_seq = x,
-            effect_size = 0.1,
-            icc = 0.05,
-            n_omit = ow[1],
-            n_wash = ow[2]
-          ))
-        },
-        error = function(e) { return(NA) }
-      )
-    }))
-  }
-  p04 <- make_plot(
-    x_lab = "# clusters per sequence",
-    which_plot = which_plot,
-    df = data.frame(
-      x = rep(n_clust_per_seqs, length(ow_vec)),
-      y = v_ratios_4,
-      n_wo = rep(c(1:length(ow_vec))-1, each=length(n_clust_per_seqs))
-    )
-  )
+  # # Plot component 4: Clusters per sequence
+  # n_clust_per_seqs <- c(1:8)
+  # v_ratios_4 <- c()
+  # for (ow in ow_vec) {
+  #   v_ratios_4 <- c(v_ratios_4, sapply(n_clust_per_seqs, function(x) {
+  #     tryCatch(
+  #       expr = {
+  #         return(ss_ratio(
+  #           power = 0.9,
+  #           n_sequences = 6,
+  #           n_clust_per_seq = x,
+  #           effect_size = 0.1,
+  #           icc = 0.05,
+  #           n_omit = ow[1],
+  #           n_wash = ow[2]
+  #         ))
+  #       },
+  #       error = function(e) { return(NA) }
+  #     )
+  #   }))
+  # }
+  # p04 <- make_plot(
+  #   x_lab = "# clusters per sequence",
+  #   which_plot = which_plot,
+  #   df = data.frame(
+  #     x = rep(n_clust_per_seqs, length(ow_vec)),
+  #     y = v_ratios_4,
+  #     n_wo = rep(c(1:length(ow_vec))-1, each=length(n_clust_per_seqs))
+  #   )
+  # )
   
   # Create combined plot
-  plot <- ggpubr::ggarrange(p01, p02, p03, p04, ncol=2, nrow=2)
+  # plot <- ggpubr::ggarrange(p01, p02, p03, p04, ncol=2, nrow=2)
+  plot <- ggpubr::ggarrange(p01, p03, ncol=2)
   if (!cfg2$suppress_title) {
     plot <- annotate_figure(
       plot,
@@ -288,7 +289,8 @@ for (which_plot in c("basic", "n_omit", "n_wash", "pte")) {
   ggsave(
     filename = paste0("../Figures + Tables/", cfg2$d, " fig_SSR_", which_plot,
                       ".pdf"),
-    plot=plot, device="pdf", width=10, height=8
+    # plot=plot, device="pdf", width=10, height=8
+    plot=plot, device="pdf", width=8, height=4
   )
   
 }
@@ -299,14 +301,58 @@ for (which_plot in c("basic", "n_omit", "n_wash", "pte")) {
 ##### Plot: Staircase design #####
 ##################################.
 
-ss_ratio(
-  power = 0.9,
-  n_sequences = 4,
-  n_clust_per_seq = 4,
-  effect_size = 0.1,
-  icc = 0.05,
-  n_omit = 0,
-  n_wash = 0,
-  staircase = T,
-  n_before_and_after = 1
+df_res <- data.frame(
+  nba = integer(),
+  icc = double(),
+  n_seq = integer(),
+  n_clust_per_seq = integer(),
+  ssr = double()
+)
+
+for (icc in c(0.001,0.01,0.05,0.1)) {
+  for (n_clust_per_seq in c(2)) {
+    for (n_seq in c(4,6,8)) {
+    # for (n_seq in c(4,8,16)) {
+        for (nba in c(1:5)) {
+        
+        if (nba==1) {
+          ssr <- 1
+        } else {
+          ssr <- suppressMessages({
+            ss_ratio(
+              power = 0.9,
+              n_sequences = n_seq,
+              n_clust_per_seq = n_clust_per_seq,
+              effect_size = 0.1,
+              icc = icc,
+              n_omit = 0,
+              n_wash = 0,
+              staircase = T,
+              n_before_and_after = nba
+            )
+          })
+        }
+        
+        df_res[nrow(df_res)+1,] <- list(nba, icc, n_seq, n_clust_per_seq, ssr)
+        
+      }
+    }
+  }
+}
+
+df_res %<>% dplyr::mutate(
+  n_seq = paste0(n_seq, " sequences"),
+  nba = nba*2
+)
+plot <- ggplot(df_res, aes(x=nba, y=ssr, color=factor(icc))) +
+  facet_grid(cols=dplyr::vars(n_seq)) +
+  geom_point() +
+  geom_line() +
+  scale_color_manual(values=c("#009E73", "#56B4E9", "#CC79A7", "#E69F00")) +
+  scale_y_continuous(breaks=seq(1,3,0.5)) +
+  labs(x="Number of time points observed per sequence", y="ETI/IT sample size ratio", color="ICC")
+plot
+ggsave(
+    filename = paste0("../Figures + Tables/", cfg2$d, " fig_staircase.pdf"),
+  plot=plot, device="pdf", width=8, height=3
 )

@@ -79,7 +79,6 @@ calc_power <- function(model, n_sequences, n_clust_per_seq, n_ind_per_cell,
     }
   }
   
-  browser() # !!!!!
   power <- suppressWarnings({
     swPwr(
       design = design,
@@ -94,8 +93,7 @@ calc_power <- function(model, n_sequences, n_clust_per_seq, n_ind_per_cell,
       alpha = 0.05
     )
   })
-  print(as.numeric(power))
-  
+
   return(as.numeric(power))
   
 }

@@ -2,7 +2,7 @@
 cfg <- list(
   run_sims = F,
   run_it_vs_eti = T,
-  run_extra_time = T,
+  run_extra_time = F,
   run_unequal_alloc = F,
   run_process = F,
   sim_which = "Power",
@@ -40,7 +40,7 @@ if (cfg$run_it_vs_eti) { source("R/it_vs_eti.R", local=T) }
 if (cfg$run_extra_time) { source("R/extra_time.R", local=T) }
 
 # Run IT vs. ETI comparison (based on power calculator)
-if (cfg$run_unequal_alloc) { source("R/unequal_alloc.R", local=T) }
+if (cfg$run_unequal_alloc) { source("R/unequal_alloc.R", local=T) } # !!!!! Might be moving this to another paper
 
 # Tables and figures
 if (cfg$run_process) { source("R/process.R", local=T) }
