@@ -51,6 +51,37 @@ create_df <- function(iccs, cacs, effect_sizes) {
             effect_size
           )
           
+          # This code was used to confirm that the power gain from increasing
+          #     the sample size at baseline is equivalent to the gain from
+          #     adding time points to the start of the study
+          # if (i<=4) {
+          #   
+          #   p2 <- calc_power(
+          #     model = "ETI",
+          #     n_sequences = 6,
+          #     n_clust_per_seq = 4,
+          #     n_ind_per_cell = 30,
+          #     effect_size = effect_size,
+          #     icc = icc,
+          #     cac = cac,
+          #     n_omit = 0,
+          #     n_wash = 0,
+          #     n_extra_c = 0,
+          #     n_extra_t = 0,
+          #     n_baseline_scale = 1+n_extras[[i]][1]
+          #   )
+          #   
+          #   df_plot[nrow(df_plot)+1,] <- list(
+          #     sum(n_extras[[i]]),
+          #     p2,
+          #     "Extra observations in period 1",
+          #     paste0("ICC: ", icc),
+          #     paste0("CAC: ", cac),
+          #     effect_size
+          #   )
+          #   
+          # }
+          
         }
       }
     }
@@ -62,7 +93,6 @@ create_df <- function(iccs, cacs, effect_sizes) {
 
 # Generate plot 1 (CAC not varied)
 df_plot_1 <- create_df(
-  # iccs = c(0, 0.005, 0.01, 0.1, 0.2),
   iccs = c(0, 0.005, 0.01, 0.05, 0.1),
   cacs = 1,
   effect_sizes = 0.15
@@ -71,6 +101,7 @@ plot_1 <- ggplot(df_plot_1, aes(x=time, y=power, color=which)) +
   geom_line() +
   geom_point() +
   scale_color_manual(values=c("#009E73", "#56B4E9")) +
+  # scale_color_manual(values=c("#009E73", "#56B4E9", "#CC79A7")) +
   scale_y_continuous(
     labels = scales::percent,
     limits = c(0.4,1),

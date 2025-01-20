@@ -32,7 +32,8 @@ expit <- function(x) {1/(exp(-x)+1)}
 # Helper function to calculate power given inputs
 calc_power <- function(model, n_sequences, n_clust_per_seq, n_ind_per_cell,
                        effect_size, icc, cac, n_omit, n_wash, n_extra_c=0,
-                       n_extra_t=0, staircase=F, n_before_and_after=NA) {
+                       n_extra_t=0, staircase=F, n_before_and_after=NA,
+                       n_baseline_scale=1) {
   
   if (staircase) {
     design <- swDsn(
@@ -58,7 +59,14 @@ calc_power <- function(model, n_sequences, n_clust_per_seq, n_ind_per_cell,
       extra.ctl.time = n_extra_c,
       extra.trt.time = n_extra_t
     )
-    n_matrix <- n_ind_per_cell
+    if (n_baseline_scale==1) {
+      n_matrix <- n_ind_per_cell
+    } else {
+      n_row <- nrow(design$swDsn)
+      n_col <- ncol(design$swDsn)
+      n_matrix <- matrix(n_ind_per_cell, nrow=n_row, ncol=n_col)
+      n_matrix[,1] <- n_ind_per_cell*n_baseline_scale
+    }
   }
   
   if (model=="IT") {
