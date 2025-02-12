@@ -2,6 +2,8 @@
 cfg <- list(
   run_sims = F,
   run_it_vs_eti = T,
+  run_eti_estimands = T,
+  run_double_clusters = F,
   run_extra_time = F,
   run_unequal_alloc = F,
   run_process = F,
@@ -35,6 +37,12 @@ if (cfg$run_sims) { source("R/run.R", local=T) }
 
 # Run IT vs. ETI comparison (based on power calculator)
 if (cfg$run_it_vs_eti) { source("R/it_vs_eti.R", local=T) }
+
+# Run ETI vs. ETI comparison (based on power calculator)
+if (cfg$run_eti_estimands) { source("R/eti_estimands.R", local=T) }
+
+# Run comparison of doubling individuals vs. doubling clusters (based on power calculator)
+if (cfg$run_double_clusters) { source("R/double_clusters.R", local=T) }
 
 # Run IT vs. ETI comparison (based on power calculator)
 if (cfg$run_extra_time) { source("R/extra_time.R", local=T) }
