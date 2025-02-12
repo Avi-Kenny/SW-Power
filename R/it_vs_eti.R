@@ -101,9 +101,14 @@ ss_ratio <- function(power, n_sequences, n_clust_per_seq, effect_size, icc,
 make_plot <- function(x_lab, which_plot, df) {
   
   if (which_plot=="n_omit") {
-    lab_col <- "# time points omitted from end"
+    # lab_col <- "# time points omitted from end"
+    lab_col <- "Estimand"
     scale_y <- scale_y_continuous(breaks=seq(1,3,0.2), limits=c(1,3))
     theme_ <- theme(legend.position="bottom")
+    df %<>% dplyr::mutate(
+      n_wo = ifelse(n_wo==0, "TATE(0,S)", paste0("TATE(0,S-", n_wo, ")")),
+      n_wo = factor(n_wo, levels=c("TATE(0,S)", "TATE(0,S-1)", "TATE(0,S-2)", "TATE(0,S-3)"))
+    )
   } else if (which_plot=="n_wash") {
     lab_col <- "# washout time points"
     scale_y <- scale_y_continuous(breaks=seq(1,7,0.5), limits=c(1,7.1))
@@ -139,17 +144,17 @@ make_plot <- function(x_lab, which_plot, df) {
 ##### Plot: SSR #####
 #####################.
 
-for (which_plot in c("basic", "n_omit", "n_wash", "pte")) {
-# for (which_plot in c("pte")) {
+# for (which_plot in c("basic", "n_omit", "n_wash", "pte")) {
+for (which_plot in c("basic", "n_omit")) {
   
   if (which_plot=="basic") {
     ow_vec <- list(c(0,0))
   } else if (which_plot=="n_omit") {
     ow_vec <- list(c(0,0), c(1,0), c(2,0), c(3,0))
-  } else if (which_plot=="n_wash") {
-    ow_vec <- list(c(0,0), c(0,1), c(0,2), c(0,3))
-  } else if (which_plot=="pte") {
-    ow_vec <- list(c(5,0), c(4,1), c(2,3), c(0,5))
+  # } else if (which_plot=="n_wash") {
+  #   ow_vec <- list(c(0,0), c(0,1), c(0,2), c(0,3))
+  # } else if (which_plot=="pte") {
+  #   ow_vec <- list(c(5,0), c(4,1), c(2,3), c(0,5))
   }
   
   # Plot component 1: Sequences
@@ -279,7 +284,11 @@ for (which_plot in c("basic", "n_omit", "n_wash", "pte")) {
   
   # Create combined plot
   # plot <- ggpubr::ggarrange(p01, p02, p03, p04, ncol=2, nrow=2)
-  plot <- ggpubr::ggarrange(p01, p03, ncol=2)
+  if (which_plot=="basic") {
+    plot <- ggpubr::ggarrange(p01, p03, ncol=2)
+  } else {
+    plot <- ggpubr::ggarrange(p01, p03, ncol=2, legend="bottom", common.legend=T)
+  }
   if (!cfg2$suppress_title) {
     plot <- annotate_figure(
       plot,
@@ -289,7 +298,6 @@ for (which_plot in c("basic", "n_omit", "n_wash", "pte")) {
   ggsave(
     filename = paste0("../Figures + Tables/", cfg2$d, " fig_SSR_", which_plot,
                       ".pdf"),
-    # plot=plot, device="pdf", width=10, height=8
     plot=plot, device="pdf", width=8, height=4
   )
   
