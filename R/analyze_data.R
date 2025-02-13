@@ -1,9 +1,9 @@
 #' Analyze stepped wedge dataset
 #'
 #' @param dat A dataset returned by generate_data()
-#' @param cal_time One of c("cat", "linear", "NCS"); how the secular
+#' @param cal_time One of c("categorical", "linear", "NCS"); how the secular
 #'     time trend should be modeled
-#' @param exp_time One of c("IT", "cat", "NCS"); how the exposure time trend
+#' @param exp_time One of c("IT", "ETI", "NCS"); how the exposure time trend
 #'     should be modeled
 #' @param re One of c("cluster", "cluster+time"); whether a cluster intercept
 #'     should be included ("cluster") or a cluster intercept plus a
@@ -18,13 +18,13 @@
 #'     and SE estimate
 analyze_data <- function(
   dat, cal_time, exp_time, re, estimand_type, estimand_time, return_curve=F,
-  return_ses=F
+  return_ses=F, return_model=F
 ) {
   
-  if (!(cal_time %in% c("cat", "linear", "NCS"))) {
+  if (!(cal_time %in% c("categorical", "linear", "NCS"))) {
     stop("`cal_time` misspecified.")
   }
-  if (!(exp_time %in% c("IT", "cat", "NCS"))) {
+  if (!(exp_time %in% c("IT", "ETI", "NCS"))) {
     stop("`exp_time` misspecified.")
   }
   if (!(re %in% c("cluster", "cluster+time"))) {
@@ -35,7 +35,7 @@ analyze_data <- function(
   
   # Create exposure time variables (factors or spline basis)
   S <- length(unique(dat$s_ij))-1
-  if (exp_time=="cat") {
+  if (exp_time=="ETI") {
     
     for (s in c(1:S)) {
       dat[[paste0("s_", s)]] <- In(dat$s_ij==s)
@@ -60,7 +60,7 @@ analyze_data <- function(
   }
   
   # Create calendar time variables (factors or spline basis)
-  if (cal_time=="cat") {
+  if (cal_time=="categorical") {
     
     dat[["j_fac"]] <- factor(dat$j)
     
@@ -89,7 +89,7 @@ analyze_data <- function(
   if (exp_time=="IT") {
     
     formula <- "y_ij ~ x_ij + "
-    if (cal_time=="cat") { formula <- paste0(formula, "j_fac - 1 + ") }
+    if (cal_time=="categorical") { formula <- paste0(formula, "j_fac - 1 + ") }
     if (re=="cluster") {
       formula <- paste0(formula, "(1|i)")
     } else if (re=="cluster+time") {
@@ -102,12 +102,12 @@ analyze_data <- function(
     est <- summ$coefficients["x_ij", "Estimate"]
     se <- summ$coefficients["x_ij", "Std. Error"]
     
-  } else if (exp_time %in% c("cat", "NCS")) {
+  } else if (exp_time %in% c("ETI", "NCS")) {
     
     formula <- "y_ij ~ "
-    num_s_terms <- ifelse(exp_time=="cat", S, 4)
+    num_s_terms <- ifelse(exp_time=="ETI", S, 4)
     for (s in c(1:num_s_terms)) { formula <- paste0(formula, "s_", s, " + ") }
-    if (cal_time=="cat") {
+    if (cal_time=="categorical") {
       formula <- paste0(formula, "j_fac - 1 + ")
     } else if (cal_time=="linear") {
       formula <- paste0(formula, "j + ")
@@ -176,6 +176,8 @@ analyze_data <- function(
       res$curve_se <- as.numeric(sqrt(diag(sigma_s_hat)))
     }
   }
+  
+  if (return_model) { res$model <- model }
   
   return(res)
   

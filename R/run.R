@@ -11,10 +11,10 @@ if (cfg$sim_run_or_update=="run") {
         parallel = cfg$sim_parallel,
         n_cores = cfg$sim_n_cores,
         stop_at_error = cfg$sim_stop_at_error,
-        batch_levels = c("data_type", "sigma", "icc", "n_sequences", # tau
+        batch_levels = c("data_type", "sigma", "icc", "n_sequences",
                          "n_clust_per_seq", "n_ind_per_cell", "re"),
         # return_batch_id = T,
-        # seed = 123,
+        seed = 123,
         packages = cfg$pkgs
       )
       sim <- do.call(set_levels, c(list(sim), level_set))

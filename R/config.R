@@ -2,7 +2,7 @@
 .libPaths(c("/home/akenny/R_lib", "/hpc/home/ak811/R_lib", .libPaths()))
 
 # Set packages
-cfg$pkgs <- c("magrittr", "splines", "dplyr", "lme4", "fs")
+cfg$pkgs <- c("magrittr", "splines", "dplyr", "lme4", "steppedwedge") # "fs"
 cfg$pkgs_nocluster <- c("ggplot2", "viridis", "swCRTdesign", "ggpubr")
 
 # Set cluster config
@@ -14,10 +14,17 @@ if (Sys.getenv("HOME")=="/home/akenny") {
                  "/Code__", Sys.getenv("proj"))
   )
 } else if (Sys.getenv("HOME")=="/hpc/home/ak811") {
-  # DCC
+  # Duke DCC
   cluster_config <- list(
     js = "slurm",
     dir = paste0("/hpc/home/ak811/", Sys.getenv("proj"),
+                 "/Code__", Sys.getenv("proj"))
+  )
+} else if (Sys.getenv("HOME")=="/home/ak811") {
+  # Duke RCC
+  cluster_config <- list(
+    js = "slurm",
+    dir = paste0("/shared/home/ak811/", Sys.getenv("proj"),
                  "/Code__", Sys.getenv("proj"))
   )
 } else {

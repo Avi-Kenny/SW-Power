@@ -1,18 +1,18 @@
 # Main config
 cfg <- list(
-  run_sims = F,
-  run_it_vs_eti = T,
-  run_eti_estimands = T,
+  run_sims = T,
+  run_it_vs_eti = F,
+  run_eti_estimands = F,
   run_double_clusters = F,
   run_extra_time = F,
-  run_unequal_alloc = F,
   run_process = F,
-  sim_which = "Power",
-  sim_level_set = "Power set 1",
+  sim_which = "Washout", # "Power", "Washout"
+  sim_level_set = "Washout set 1", # "Power set 1", "Washout set 1"
   sim_run_or_update = "run",
   sim_num = 1000,
+  # sim_num = 1, # !!!!!
   sim_parallel = F,
-  sim_n_cores = 350,
+  sim_n_cores = 500,
   sim_stop_at_error = F
 )
 
@@ -48,7 +48,8 @@ if (cfg$run_double_clusters) { source("R/double_clusters.R", local=T) }
 if (cfg$run_extra_time) { source("R/extra_time.R", local=T) }
 
 # Run IT vs. ETI comparison (based on power calculator)
-if (cfg$run_unequal_alloc) { source("R/unequal_alloc.R", local=T) } # !!!!! Might be moving this to another paper
+# !!!!! Move this code to other folder
+# if (cfg$run_unequal_alloc) { source("R/unequal_alloc.R", local=T) }
 
 # Tables and figures
 if (cfg$run_process) { source("R/process.R", local=T) }
