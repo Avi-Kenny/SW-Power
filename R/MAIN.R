@@ -12,7 +12,7 @@ cfg <- list(
   sim_num = 1000,
   # sim_num = 1, # !!!!!
   sim_parallel = F,
-  sim_n_cores = 500,
+  sim_n_cores = 1000,
   sim_stop_at_error = F
 )
 

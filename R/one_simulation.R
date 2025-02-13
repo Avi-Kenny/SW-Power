@@ -170,7 +170,8 @@ if (cfg$sim_which=="Power") {
     if (L$model$exp_time=="PIT") {
       
       dat %<>% dplyr::mutate(
-        s_ij = pmin(s_ij, n_wash+1)
+        s_ij = pmin(s_ij, n_wash+1),
+        ij = as.integer(factor(paste0(i,"-",j)))
       )
       
     } else if (L$model$exp_time=="IT") {
@@ -197,13 +198,22 @@ if (cfg$sim_which=="Power") {
     # Analyze data
     if (L$model$exp_time=="PIT") {
       
-      results <- steppedwedge::analyze(
-        dat = sw_dat,
-        estimand_type = "PTE",
-        estimand_time = n_wash+1,
-        exp_time = "ETI",
-        cal_time = L$model$cal_time,
-        re = rand_eff
+      if (L$model$cal_time!="categorical") {
+        stop("PIT model only implemented for categorical calendar time")
+      }
+      if (L$re!="cluster+time") {
+        stop("PIT model only implemented for re=='cluster+time'")
+      }
+      
+      model_pit <- lme4::lmer(
+        formula = "y_ij~factor(j)+factor(s_ij)+(1|i)+(1|ij)",
+        data = dat
+      )
+      summ_pit <- summary(model_pit)
+      c_name <- paste0("factor(s_ij)", round(n_wash+1))
+      results <- list(
+        te_est = summ_pit$coefficients[c_name,"Estimate"],
+        te_se = summ_pit$coefficients[c_name,"Std. Error"]
       )
       
     } else if (L$model$exp_time=="IT") {

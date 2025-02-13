@@ -31,15 +31,15 @@ if (cfg$run_sims && Sys.getenv("sim_run") %in% c("first", "")) {
   # Figures: ...
   level_sets[["Washout set 1"]] <- list(
     data_type = "normal",
-    sigma = 2,
+    sigma = 0.8,
     icc = c(0.01,0.1),
-    n_sequences = c(5, 10, 20, 40),
+    n_sequences = c(6, 9, 12),
     n_clust_per_seq = 2,
     n_ind_per_cell = 8,
     re = "cluster+time",
-    estimand = c("TATE(0,S)", "TATE(1,S)", "TATE(2,S)", "TATE(3,S)"),
+    estimand = c("TATE(1,S)", "TATE(3,S)"),
     model = list(
-      "IT-full-temp" = list(cal_time="categorical", exp_time="IT-full-temp", n_omit=0),
+      # "IT-full-temp" = list(cal_time="categorical", exp_time="IT-full-temp", n_omit=0), # Testing to make sure this gives highest power
       "IT" = list(cal_time="categorical", exp_time="IT", n_omit=0),
       "PIT" = list(cal_time="categorical", exp_time="PIT", n_omit=0),
       "ETI" = list(cal_time="categorical", exp_time="ETI", n_omit=0)

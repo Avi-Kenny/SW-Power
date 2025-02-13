@@ -4,7 +4,6 @@
 
 # Setup
 cfg2 <- list(
-  suppress_title = T,
   d = format(Sys.time(), "%Y-%m-%d")
 )
 

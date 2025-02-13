@@ -2,6 +2,11 @@
 ##### Sim results: analysis models #####
 ########################################.
 
+# Setup
+cfg2 <- list(
+  d = format(Sys.time(), "%Y-%m-%d")
+)
+
 sim <- readRDS("SimEngine.out/power_1_20240724.rds")
 
 summ <- SimEngine::summarize(sim,
@@ -58,10 +63,8 @@ summ <- SimEngine::summarize(sim,
 )
 
 summ %<>% dplyr::mutate(
-  # n_clust_per_seq = paste0(n_clust_per_seq, " clusters / seq"),
   icc = paste0("ICC: ", icc),
   model = ifelse(model=="IT", "IT*", model)
-  # estimand = factor(estimand, levels=c("TATE", "PTE-1", "PTE-S"))
 )
 
 # # Jitter "ETI cat cal" points
@@ -84,7 +87,7 @@ plot <- ggplot(summ, aes(x=n_sequences, y=power, color=model)) +
 
 ggsave(
   filename = paste0("../Figures + Tables/", cfg2$d,
-                    " fig_models.pdf"),
+                    " fig_washout.pdf"),
   plot=plot, device="pdf", width=7, height=5
 )
 
