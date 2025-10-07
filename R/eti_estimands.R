@@ -12,7 +12,6 @@ make_plot2 <- function(x_lab, which_plot, df) {
   } else if (which_plot=="pte") {
     df %<>% dplyr::mutate(
       n_wo = pmax(2*n_wo,1) # Converts from c(0,1,2,3) to PTE scale c(1,2,4,6)
-      # n_wo = factor(paste0("PTE(", n_wo, ")"))
     )
   }
   
@@ -21,13 +20,16 @@ make_plot2 <- function(x_lab, which_plot, df) {
     geom_point() +
     scale_color_manual(values=c("#009E73", "#56B4E9", "#CC79A7", "#E69F00")) +
     scale_y_log10(breaks=c(50,100,200,400,800,1600)) +
-    scale_x_continuous(
+    labs(x="Estimand", y="Sample size required for 90% power (log scale)", color=x_lab) +
+    theme(legend.position="right")
+  
+  if (which_plot=="pte") {
+    plot <- plot + scale_x_continuous(
       breaks = c(1, 2, 4, 6),
       labels = c("PTE(1)", "PTE(2)", "PTE(4)", "PTE(6)"),
       minor_breaks = c(1:6)
-    ) +
-    labs(x="Estimand", y="Sample size required for 90% power", color=x_lab) +
-    theme(legend.position="right")
+    )
+  }
   
   return(plot)
   
@@ -36,8 +38,7 @@ make_plot2 <- function(x_lab, which_plot, df) {
 
 
 for (which_plot in c("n_omit", "n_wash", "pte")) {
-  # for (which_plot in c("pte")) {
-  
+
   if (which_plot=="n_omit") {
     ow_vec <- list(c(0,0), c(1,0), c(2,0), c(3,0))
   } else if (which_plot=="n_wash") {

@@ -7,7 +7,7 @@ cfg2 <- list(
   d = format(Sys.time(), "%Y-%m-%d")
 )
 
-sim <- readRDS("SimEngine.out/power_1_20240724.rds")
+sim <- readRDS("SimEngine.out/power_1_20250225.rds")
 
 summ <- SimEngine::summarize(sim,
   list(stat="mean", x="reject", name="power")
@@ -15,7 +15,6 @@ summ <- SimEngine::summarize(sim,
   # list(stat="sd", x="est"),
   # list(stat="coverage", estimate="est", se="se", truth="true_tate", name="cov")
 )
-if (sim$config$seed==764437398) { summ %<>% dplyr::filter(icc!=0.05) } # !!!!! TEMP
 
 summ %<>% dplyr::mutate(
   # n_clust_per_seq = paste0(n_clust_per_seq, " clusters / seq"),
@@ -25,7 +24,7 @@ summ %<>% dplyr::mutate(
 
 # Jitter "ETI cat cal" points
 summ %<>% dplyr::mutate(
-  power = ifelse(model=="ETI, linear cal time", power+0.01, power)
+  power = ifelse(model=="ETI, cat cal time", power-0.01, power)
 )
 
 plot <- ggplot(summ, aes(x=n_sequences, y=power, color=model)) +
@@ -37,6 +36,7 @@ plot <- ggplot(summ, aes(x=n_sequences, y=power, color=model)) +
     limits = c(0,1),
     labels=scales::percent
   ) +
+  scale_x_continuous(breaks=c(6,12,18,24)) +
   labs(y="Power", x="Number of sequences", color="Model") +
   scale_color_manual(values=c("#009E73", "#56B4E9", "#CC79A7", "#E69F00")) +
   theme(legend.position="bottom")
@@ -64,13 +64,18 @@ summ <- SimEngine::summarize(sim,
 
 summ %<>% dplyr::mutate(
   icc = paste0("ICC: ", icc),
-  model = ifelse(model=="IT", "IT*", model)
+  model = dplyr::case_when(
+    model=="IT" ~ "IT*",
+    model=="PIT" ~ "DCT",
+    TRUE ~ model
+  )
+  # model = ifelse(model=="IT", "IT*", model)
 )
 
-# # Jitter "ETI cat cal" points
-# summ %<>% dplyr::mutate(
-#   power = ifelse(model=="ETI, linear cal time", power+0.01, power)
-# )
+# Jitter "ETI cat cal" points
+summ %<>% dplyr::mutate(
+  power = ifelse(model=="ETI, cat cal time", power-0.01, power)
+)
 
 plot <- ggplot(summ, aes(x=n_sequences, y=power, color=model)) +
   geom_line() +

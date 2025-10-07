@@ -90,23 +90,30 @@ create_df <- function(iccs, cacs, effect_sizes) {
   
 }
 
-# Generate plot 1 (CAC not varied)
-df_plot_1 <- create_df(
-  iccs = c(0, 0.005, 0.01, 0.05, 0.1),
-  cacs = 1,
-  effect_sizes = 0.15
-)
+# Generate plot 1 (ICC and CAC varied)
+df_1 <- create_df(iccs=0.01, cacs=0.25, effect_sizes=0.138)
+df_2 <- create_df(iccs=0.01, cacs=0.5, effect_sizes=0.146)
+df_3 <- create_df(iccs=0.01, cacs=0.75, effect_sizes=0.151)
+df_4 <- create_df(iccs=0.01, cacs=1, effect_sizes=0.153)
+df_5 <- create_df(iccs=0.05, cacs=0.25, effect_sizes=0.21)
+df_6 <- create_df(iccs=0.05, cacs=0.5, effect_sizes=0.216)
+df_7 <- create_df(iccs=0.05, cacs=0.75, effect_sizes=0.208)
+df_8 <- create_df(iccs=0.05, cacs=1, effect_sizes=0.186)
+df_9 <- create_df(iccs=0.1, cacs=0.25, effect_sizes=0.276)
+df_10 <- create_df(iccs=0.1, cacs=0.5, effect_sizes=0.277)
+df_11 <- create_df(iccs=0.1, cacs=0.75, effect_sizes=0.250)
+df_12 <- create_df(iccs=0.1, cacs=1, effect_sizes=0.195)
+df_plot_1 <- rbind(df_1,df_2,df_3,df_4,df_5,df_6,df_7,df_8,df_9,df_10,df_11,df_12)
 plot_1 <- ggplot(df_plot_1, aes(x=time, y=power, color=which)) +
   geom_line() +
   geom_point() +
   scale_color_manual(values=c("#009E73", "#56B4E9")) +
-  # scale_color_manual(values=c("#009E73", "#56B4E9", "#CC79A7")) +
   scale_y_continuous(
     labels = scales::percent,
-    limits = c(0.4,1),
-    breaks = seq(0.4,1,0.1)
+    limits = c(0.68,0.92),
+    breaks = seq(0.6,1,0.1)
   ) +
-  facet_grid(cols=dplyr::vars(icc)) +
+  facet_grid(rows=dplyr::vars(icc), cols=dplyr::vars(cac)) +
   labs(
     x = "# Extra time points",
     y = "Power",
@@ -117,7 +124,7 @@ plot_1 <- ggplot(df_plot_1, aes(x=time, y=power, color=which)) +
 ggsave(
   filename = paste0("../Figures + Tables/", cfg2$d,
                     " fig_power_extra_time_tate.pdf"),
-  plot=plot_1, device="pdf", width=9, height=4
+  plot=plot_1, device="pdf", width=9, height=6
 )
 
 # Generate plot 2 (CAC, eff_size varied)

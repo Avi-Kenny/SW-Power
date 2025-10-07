@@ -12,7 +12,7 @@ if (cfg$sim_run_or_update=="run") {
         n_cores = cfg$sim_n_cores,
         stop_at_error = cfg$sim_stop_at_error,
         batch_levels = c("data_type", "sigma", "icc", "n_sequences",
-                         "n_clust_per_seq", "n_ind_per_cell", "re"),
+                         "n_clust_per_seq", "n_ind_per_cell", "re", "tvte"),
         # return_batch_id = T,
         seed = 123,
         packages = cfg$pkgs

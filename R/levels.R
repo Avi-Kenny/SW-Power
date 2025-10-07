@@ -7,23 +7,23 @@ if (cfg$run_sims && Sys.getenv("sim_run") %in% c("first", "")) {
   # Figures: ...
   level_sets[["Power set 1"]] <- list(
     data_type = "normal",
-    sigma = 2,
+    sigma = 1.5,
     icc = c(0.01,0.1),
-    n_sequences = c(5, 10, 20, 40),
+    n_sequences = c(6, 12, 18, 24),
     n_clust_per_seq = 2,
     n_ind_per_cell = 8,
     re = "cluster+time",
+    tvte = TRUE,
     estimand = c("TATE", "PTE-1", "PTE-S"),
     model = list(
-      "IT" = list(cal_time="categorical", exp_time="IT", n_omit=0),
+      # "IT" = list(cal_time="categorical", exp_time="IT", n_omit=0),
       "ETI, cat cal time" = list(cal_time="categorical", exp_time="ETI", n_omit=0),
       "ETI, linear cal time" = list(cal_time="linear", exp_time="ETI", n_omit=0),
       # "ETI, spline time" = list(cal_time="NCS", exp_time="ETI", n_omit=0),
       # "NCS, cat cal time" = list(cal_time="categorical", exp_time="NCS", n_omit=0),
-      "NCS, linear cal time" = list(cal_time="linear", exp_time="NCS", n_omit=0)
+      "NCS, cat cal time" = list(cal_time="categorical", exp_time="NCS", n_omit=0)
+      # "NCS, linear cal time" = list(cal_time="linear", exp_time="NCS", n_omit=0)
       # "NCS, spline cal time" = list(cal_time="NCS", exp_time="NCS", n_omit=0)
-      # "ETI, omit last 1" = list(cal_time="categorical", exp_time="ETI", n_omit=1),
-      # "ETI, omit last 2" = list(cal_time="categorical", exp_time="ETI", n_omit=2)
     )
   )
   
@@ -37,11 +37,12 @@ if (cfg$run_sims && Sys.getenv("sim_run") %in% c("first", "")) {
     n_clust_per_seq = 2,
     n_ind_per_cell = 8,
     re = "cluster+time",
+    tvte = FALSE,
     estimand = c("TATE(1,S)", "TATE(3,S)"),
     model = list(
       # "IT-full-temp" = list(cal_time="categorical", exp_time="IT-full-temp", n_omit=0), # Testing to make sure this gives highest power
       "IT" = list(cal_time="categorical", exp_time="IT", n_omit=0),
-      "PIT" = list(cal_time="categorical", exp_time="PIT", n_omit=0),
+      "DCT" = list(cal_time="categorical", exp_time="DCT", n_omit=0),
       "ETI" = list(cal_time="categorical", exp_time="ETI", n_omit=0)
     )
   )

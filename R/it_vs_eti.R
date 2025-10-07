@@ -7,6 +7,8 @@ cfg2 <- list(
   suppress_title = T,
   d = format(Sys.time(), "%Y-%m-%d")
 )
+# n_sequences <- c(3:8) # !!!!!
+n_sequences <- seq(4,20,2)
 
 # Function to calculate sample size corresponding to desired power
 calc_ss <- function(power, model, n_sequences, n_clust_per_seq, effect_size,
@@ -107,29 +109,37 @@ make_plot <- function(x_lab, which_plot, df) {
     theme_ <- theme(legend.position="bottom")
     df %<>% dplyr::mutate(
       n_wo = ifelse(n_wo==0, "TATE(0,S)", paste0("TATE(0,S-", n_wo, ")")),
-      n_wo = factor(n_wo, levels=c("TATE(0,S)", "TATE(0,S-1)", "TATE(0,S-2)", "TATE(0,S-3)"))
+      n_wo = factor(n_wo, levels=c("TATE(0,S)", "TATE(0,S-1)", "TATE(0,S-2)", "TATE(0,S-3)")),
+      grp = x
     )
-  } else if (which_plot=="n_wash") {
-    lab_col <- "# washout time points"
-    scale_y <- scale_y_continuous(breaks=seq(1,7,0.5), limits=c(1,7.1))
-    theme_ <- theme(legend.position="bottom")
+    # } else if (which_plot=="n_wash") {
+  #   lab_col <- "# washout time points"
+  #   scale_y <- scale_y_continuous(breaks=seq(1,7,0.5), limits=c(1,7.1))
+  #   theme_ <- theme(legend.position="bottom")
   } else if (which_plot=="basic") {
     lab_col <- ""
     scale_y <- scale_y_continuous(breaks=seq(1,3,0.2), limits=c(1,3))
     theme_ <- theme(legend.position="none")
-  } else if (which_plot=="pte") {
-    lab_col <- "s, PTE(s)"
-    scale_y <- scale_y_continuous(breaks=c(1:12), limits=c(1,12.5))
-    theme_ <- theme(legend.position="bottom")
-    df %<>% dplyr::mutate(
-      n_wo = pmax(2*n_wo,1) # Converts from c(0,1,2,3) to PTE scale c(1,2,4,6)
-    )
+    df %<>% dplyr::mutate(grp=n_wo)
+  # } else if (which_plot=="pte") {
+  #   lab_col <- "s, PTE(s)"
+  #   scale_y <- scale_y_continuous(breaks=c(1:12), limits=c(1,12.5))
+  #   theme_ <- theme(legend.position="bottom")
+  #   df %<>% dplyr::mutate(
+  #     n_wo = pmax(2*n_wo,1) # Converts from c(0,1,2,3) to PTE scale c(1,2,4,6)
+  #   )
   }
   
-  plot <- ggplot(df, aes(x=x, y=y, color=factor(n_wo))) +
-    geom_line() +
+  if (x_lab=="# sequences") {
+    scale_x_cts <- scale_x_continuous(breaks=n_sequences, minor_breaks=NULL)
+  } else if (x_lab=="ICC") {
+    scale_x_cts <- scale_x_continuous(minor_breaks=seq(0,0.2,0.01))
+  }
+  plot <- ggplot(df, aes(x=x, y=y, group=grp, color=factor(n_wo))) +
+    geom_line(color="darkgrey", linewidth=0.4) +
     geom_point() +
     scale_color_manual(values=c("#009E73", "#56B4E9", "#CC79A7", "#E69F00")) +
+    scale_x_cts +
     scale_y +
     labs(x=x_lab, y="ETI/IT sample size ratio", color=lab_col) +
     theme_
@@ -144,8 +154,8 @@ make_plot <- function(x_lab, which_plot, df) {
 ##### Plot: SSR #####
 #####################.
 
-# for (which_plot in c("basic", "n_omit", "n_wash", "pte")) {
 for (which_plot in c("basic", "n_omit")) {
+# for (which_plot in c("basic")) {
   
   if (which_plot=="basic") {
     ow_vec <- list(c(0,0))
@@ -158,7 +168,6 @@ for (which_plot in c("basic", "n_omit")) {
   }
   
   # Plot component 1: Sequences
-  n_sequences <- c(2:10)
   v_ratios_1 <- c()
   for (ow in ow_vec) {
     v_ratios_1 <- c(v_ratios_1, sapply(n_sequences, function(x) {
@@ -189,39 +198,8 @@ for (which_plot in c("basic", "n_omit")) {
     )
   )
   
-  # # Plot component 2: Effect sizes
-  # effect_sizes <- seq(0.05,0.4,0.05)
-  # v_ratios_2 <- c()
-  # for (ow in ow_vec) {
-  #   v_ratios_2 <- c(v_ratios_2, sapply(effect_sizes, function(x) {
-  #     tryCatch(
-  #       expr = {
-  #         return(ss_ratio(
-  #           power = 0.9,
-  #           n_sequences = 6,
-  #           n_clust_per_seq = 4,
-  #           effect_size = x,
-  #           icc = 0.05,
-  #           n_omit = ow[1],
-  #           n_wash = ow[2]
-  #         ))
-  #       },
-  #       error = function(e) { return(NA) }
-  #     )
-  #   }))
-  # }
-  # p02 <- make_plot(
-  #   x_lab = "Effect size",
-  #   which_plot = which_plot,
-  #   df = data.frame(
-  #     x = rep(effect_sizes, length(ow_vec)),
-  #     y = v_ratios_2,
-  #     n_wo = rep(c(1:length(ow_vec))-1, each=length(effect_sizes))
-  #   )
-  # )
-  
   # Plot component 3: ICCs
-  iccs <- c(seq(0,0.01,0.002),seq(0.02,0.2,0.01))
+  iccs <- c(c(0,0.005),seq(0.01,0.2,0.01))
   v_ratios_3 <- c()
   for (ow in ow_vec) {
     v_ratios_3 <- c(v_ratios_3, sapply(iccs, function(x) {
@@ -250,37 +228,6 @@ for (which_plot in c("basic", "n_omit")) {
       n_wo = rep(c(1:length(ow_vec))-1, each=length(iccs))
     )
   )
-  
-  # # Plot component 4: Clusters per sequence
-  # n_clust_per_seqs <- c(1:8)
-  # v_ratios_4 <- c()
-  # for (ow in ow_vec) {
-  #   v_ratios_4 <- c(v_ratios_4, sapply(n_clust_per_seqs, function(x) {
-  #     tryCatch(
-  #       expr = {
-  #         return(ss_ratio(
-  #           power = 0.9,
-  #           n_sequences = 6,
-  #           n_clust_per_seq = x,
-  #           effect_size = 0.1,
-  #           icc = 0.05,
-  #           n_omit = ow[1],
-  #           n_wash = ow[2]
-  #         ))
-  #       },
-  #       error = function(e) { return(NA) }
-  #     )
-  #   }))
-  # }
-  # p04 <- make_plot(
-  #   x_lab = "# clusters per sequence",
-  #   which_plot = which_plot,
-  #   df = data.frame(
-  #     x = rep(n_clust_per_seqs, length(ow_vec)),
-  #     y = v_ratios_4,
-  #     n_wo = rep(c(1:length(ow_vec))-1, each=length(n_clust_per_seqs))
-  #   )
-  # )
   
   # Create combined plot
   # plot <- ggpubr::ggarrange(p01, p02, p03, p04, ncol=2, nrow=2)
@@ -320,8 +267,7 @@ df_res <- data.frame(
 for (icc in c(0.001,0.01,0.05,0.1)) {
   for (n_clust_per_seq in c(2)) {
     for (n_seq in c(4,6,8)) {
-    # for (n_seq in c(4,8,16)) {
-        for (nba in c(1:5)) {
+      for (nba in c(1:5)) {
         
         if (nba==1) {
           ssr <- 1
@@ -359,7 +305,6 @@ plot <- ggplot(df_res, aes(x=nba, y=ssr, color=factor(icc))) +
   scale_color_manual(values=c("#009E73", "#56B4E9", "#CC79A7", "#E69F00")) +
   scale_y_continuous(breaks=seq(1,3,0.5)) +
   labs(x="Number of time points observed per sequence", y="ETI/IT sample size ratio", color="ICC")
-plot
 ggsave(
     filename = paste0("../Figures + Tables/", cfg2$d, " fig_staircase.pdf"),
   plot=plot, device="pdf", width=8, height=3

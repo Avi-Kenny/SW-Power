@@ -11,13 +11,19 @@ if (cfg$sim_which=="Power") {
     
     # Generate data
     batch({
+      if (L$tvte) {
+        # delta_s <- seq(0.15, 0.3, length.out=L$n_sequences)
+        delta_s <- seq(0.2, 0.4, length.out=L$n_sequences)
+      } else {
+        delta_s <- rep(0.2,L$n_sequences)
+      }
       tau <- L$sigma * sqrt(L$icc/(1-L$icc))
       dat <- generate_dataset(
         data_type = L$data_type,
         sigma = L$sigma,
         tau = tau,
         beta_j = seq(from=0, to=1, length.out=L$n_sequences+1),
-        delta_s = rep(0.2,L$n_sequences),
+        delta_s = delta_s,
         n_sequences = L$n_sequences,
         n_clust_per_seq = L$n_clust_per_seq,
         n_ind_per_cell = L$n_ind_per_cell,
@@ -167,7 +173,7 @@ if (cfg$sim_which=="Power") {
     }
     
     # Prep work
-    if (L$model$exp_time=="PIT") {
+    if (L$model$exp_time=="DCT") {
       
       dat %<>% dplyr::mutate(
         s_ij = pmin(s_ij, n_wash+1),
@@ -196,13 +202,13 @@ if (cfg$sim_which=="Power") {
     })
     
     # Analyze data
-    if (L$model$exp_time=="PIT") {
+    if (L$model$exp_time=="DCT") {
       
       if (L$model$cal_time!="categorical") {
-        stop("PIT model only implemented for categorical calendar time")
+        stop("DCT model only implemented for categorical calendar time")
       }
       if (L$re!="cluster+time") {
-        stop("PIT model only implemented for re=='cluster+time'")
+        stop("DCT model only implemented for re=='cluster+time'")
       }
       
       model_pit <- lme4::lmer(
