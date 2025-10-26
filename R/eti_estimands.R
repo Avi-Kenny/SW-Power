@@ -15,12 +15,15 @@ make_plot2 <- function(x_lab, which_plot, df) {
     )
   }
   
-  plot <- ggplot(df, aes(x=n_wo, y=y, color=factor(x), group=factor(x))) +
+  plot <- ggplot(df, aes(x=n_wo, y=y, color=factor(x), group=factor(x),
+                         shape=factor(x))) +
     geom_line() +
     geom_point() +
     scale_color_manual(values=c("#009E73", "#56B4E9", "#CC79A7", "#E69F00")) +
+    scale_shape_manual(values=c(16,15,18,17)) +
     scale_y_log10(breaks=c(50,100,200,400,800,1600)) +
-    labs(x="Estimand", y="Sample size required for 90% power (log scale)", color=x_lab) +
+    labs(x="Estimand", y="Sample size required for 90% power (log scale)",
+         color=x_lab, shape=x_lab) +
     theme(legend.position="right")
   
   if (which_plot=="pte") {
@@ -63,6 +66,7 @@ for (which_plot in c("n_omit", "n_wash", "pte")) {
             n_clust_per_seq = 4,
             effect_size = 0.1,
             icc = 0.05,
+            cac = 1,
             n_omit = ow[1],
             n_wash = ow[2]
           )$n)

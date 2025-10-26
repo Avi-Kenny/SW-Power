@@ -1,8 +1,9 @@
 # Main config
 cfg <- list(
+  regen_objs = T,
   run_sims = F,
   run_it_vs_eti = T,
-  run_eti_estimands = T,
+  run_eti_estimands = F,
   run_double_clusters = F,
   run_extra_time = F,
   run_process = F,

@@ -104,7 +104,7 @@ df_10 <- create_df(iccs=0.1, cacs=0.5, effect_sizes=0.277)
 df_11 <- create_df(iccs=0.1, cacs=0.75, effect_sizes=0.250)
 df_12 <- create_df(iccs=0.1, cacs=1, effect_sizes=0.195)
 df_plot_1 <- rbind(df_1,df_2,df_3,df_4,df_5,df_6,df_7,df_8,df_9,df_10,df_11,df_12)
-plot_1 <- ggplot(df_plot_1, aes(x=time, y=power, color=which)) +
+plot_1 <- ggplot(df_plot_1, aes(x=time, y=power, color=which, shape=which)) +
   geom_line() +
   geom_point() +
   scale_color_manual(values=c("#009E73", "#56B4E9")) +
@@ -117,7 +117,8 @@ plot_1 <- ggplot(df_plot_1, aes(x=time, y=power, color=which)) +
   labs(
     x = "# Extra time points",
     y = "Power",
-    color = NULL
+    color = NULL,
+    shape = NULL
   ) +
   theme(legend.position="bottom")
 
@@ -136,7 +137,7 @@ df_plot_2 <- create_df(
 df_plot_2 %<>% dplyr::mutate(
   effect_size = paste0("Eff. size: ", format(effect_size, nsmall=2))
 )
-plot_2 <- ggplot(df_plot_2, aes(x=time, y=power, color=which)) +
+plot_2 <- ggplot(df_plot_2, aes(x=time, y=power, color=which, shape=which)) +
   geom_line() +
   geom_point() +
   scale_color_manual(values=c("#009E73", "#56B4E9")) +
@@ -149,7 +150,8 @@ plot_2 <- ggplot(df_plot_2, aes(x=time, y=power, color=which)) +
   labs(
     x = "# Extra time points",
     y = "Power",
-    color = NULL
+    color = NULL,
+    shape = NULL
   ) +
   theme(legend.position="bottom")
 
@@ -176,7 +178,7 @@ df_plot_3 %<>% dplyr::mutate(
              "CAC: 0.25; Eff. size: 0.210")
   )
 )
-plot_3 <- ggplot(df_plot_3, aes(x=time, y=power, color=which)) +
+plot_3 <- ggplot(df_plot_3, aes(x=time, y=power, color=which, shape=which)) +
   geom_line() +
   geom_point() +
   scale_color_manual(values=c("#009E73", "#56B4E9")) +
@@ -189,7 +191,8 @@ plot_3 <- ggplot(df_plot_3, aes(x=time, y=power, color=which)) +
   labs(
     x = "# Extra time points",
     y = "Power",
-    color = NULL
+    color = NULL,
+    shape = NULL
   ) +
   theme(legend.position="bottom")
 

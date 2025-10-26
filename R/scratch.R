@@ -1,3 +1,37 @@
+# Robust standard error
+if (T) {
+  
+  # > head(dat)
+  # i j k      y_ij x_ij s_ij
+  # 1 1 1 1 -4.159351    0    0
+  # 2 1 1 2 -2.047745    0    0
+  # 3 1 1 3  1.589721    0    0
+  # 4 1 1 4  3.848683    0    0
+  # 5 1 1 5 -2.607160    0    0
+  # 6 1 1 6  3.042304    0    0
+  
+  library(lme4)
+  library(clubSandwich)
+  
+  # IT model
+  model_lmer <- lmer(
+    y_ij ~ factor(j) + x_ij + (1|i),
+    data = dat
+  )
+  sqrt(diag(vcov(model_lmer)))
+  robust_var <- clubSandwich::vcovCR(model_lmer, cluster=dat$i, type="CR1")
+  sqrt(diag(robust_var))
+  
+  # ETI model
+  model_lmer <- lmer(
+    y_ij ~ factor(j) + factor(s_ij) + (1|i),
+    data = dat
+  )
+  robust_var <- clubSandwich::vcovCR(model_lmer, cluster=dat$i, type="CR1")
+  sqrt(diag(vcov(model_lmer)))
+  sqrt(diag(robust_var))
+  
+}
 
 # Debugging staircase design
 if (T) {

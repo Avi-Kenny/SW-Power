@@ -19,7 +19,13 @@ summ <- SimEngine::summarize(sim,
 summ %<>% dplyr::mutate(
   # n_clust_per_seq = paste0(n_clust_per_seq, " clusters / seq"),
   icc = paste0("ICC: ", icc),
-  estimand = factor(estimand, levels=c("TATE", "PTE-1", "PTE-S"))
+  estimand = dplyr::case_when(
+    estimand=="TATE" ~ "TATE",
+    estimand=="PTE-1" ~ "PTE(1)",
+    estimand=="PTE-S" ~ "PTE(S)",
+    TRUE ~ "error"
+  ),
+  estimand = factor(estimand, levels=c("TATE", "PTE(1)", "PTE(S)"))
 )
 
 # Jitter "ETI cat cal" points
@@ -27,7 +33,7 @@ summ %<>% dplyr::mutate(
   power = ifelse(model=="ETI, cat cal time", power-0.01, power)
 )
 
-plot <- ggplot(summ, aes(x=n_sequences, y=power, color=model)) +
+plot <- ggplot(summ, aes(x=n_sequences, y=power, color=model, shape=model)) +
   geom_line() +
   geom_point() +
   facet_grid(rows=dplyr::vars(icc), cols=dplyr::vars(estimand)) +
@@ -37,7 +43,7 @@ plot <- ggplot(summ, aes(x=n_sequences, y=power, color=model)) +
     labels=scales::percent
   ) +
   scale_x_continuous(breaks=c(6,12,18,24)) +
-  labs(y="Power", x="Number of sequences", color="Model") +
+  labs(y="Power", x="Number of sequences", color="Model", shape="Model") +
   scale_color_manual(values=c("#009E73", "#56B4E9", "#CC79A7", "#E69F00")) +
   theme(legend.position="bottom")
 
@@ -77,7 +83,7 @@ summ %<>% dplyr::mutate(
   power = ifelse(model=="ETI, cat cal time", power-0.01, power)
 )
 
-plot <- ggplot(summ, aes(x=n_sequences, y=power, color=model)) +
+plot <- ggplot(summ, aes(x=n_sequences, y=power, color=model, shape=model)) +
   geom_line() +
   geom_point() +
   facet_grid(rows=dplyr::vars(icc), cols=dplyr::vars(estimand)) +
@@ -86,7 +92,7 @@ plot <- ggplot(summ, aes(x=n_sequences, y=power, color=model)) +
     limits = c(0,1),
     labels=scales::percent
   ) +
-  labs(y="Power", x="Number of sequences", color="Model") +
+  labs(y="Power", x="Number of sequences", color="Model", shape="Model") +
   scale_color_manual(values=c("#009E73", "#56B4E9", "#CC79A7", "#E69F00")) +
   theme(legend.position="bottom")
 
@@ -95,6 +101,3 @@ ggsave(
                     " fig_washout.pdf"),
   plot=plot, device="pdf", width=7, height=5
 )
-
-
-

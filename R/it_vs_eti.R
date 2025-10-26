@@ -12,7 +12,8 @@ n_sequences <- seq(4,20,2)
 
 # Function to calculate sample size corresponding to desired power
 calc_ss <- function(power, model, n_sequences, n_clust_per_seq, effect_size,
-                    icc, n_omit, n_wash, staircase=F, n_before_and_after=NA) {
+                    icc, cac, n_omit, n_wash, staircase=F,
+                    n_before_and_after=NA) {
   
   power_n <- function(n) {
     calc_power(
@@ -22,7 +23,7 @@ calc_ss <- function(power, model, n_sequences, n_clust_per_seq, effect_size,
       n_ind_per_cell = n,
       effect_size = effect_size,
       icc = icc,
-      cac = 1,
+      cac = cac,
       n_omit = n_omit,
       n_wash = n_wash,
       staircase = staircase,
@@ -66,7 +67,7 @@ calc_ss <- function(power, model, n_sequences, n_clust_per_seq, effect_size,
 }
 
 # Function to calculate sample size ratio (ETI:IT)
-ss_ratio <- function(power, n_sequences, n_clust_per_seq, effect_size, icc,
+ss_ratio <- function(power, n_sequences, n_clust_per_seq, effect_size, icc, cac,
                      n_omit, n_wash, staircase=F, n_before_and_after=NA) {
   
   ss_it <- calc_ss(
@@ -76,6 +77,7 @@ ss_ratio <- function(power, n_sequences, n_clust_per_seq, effect_size, icc,
     n_clust_per_seq = n_clust_per_seq,
     effect_size = effect_size,
     icc = icc,
+    cac = cac,
     n_omit = n_omit,
     n_wash = n_wash,
     staircase = staircase,
@@ -89,6 +91,7 @@ ss_ratio <- function(power, n_sequences, n_clust_per_seq, effect_size, icc,
     n_clust_per_seq = n_clust_per_seq,
     effect_size = effect_size,
     icc = icc,
+    cac = cac,
     n_omit = n_omit,
     n_wash = n_wash,
     staircase = staircase,
@@ -134,14 +137,18 @@ make_plot <- function(x_lab, which_plot, df) {
     scale_x_cts <- scale_x_continuous(breaks=n_sequences, minor_breaks=NULL)
   } else if (x_lab=="ICC") {
     scale_x_cts <- scale_x_continuous(minor_breaks=seq(0,0.2,0.01))
+  } else if (x_lab=="CAC") {
+    scale_x_cts <- scale_x_continuous(minor_breaks=seq(0.3,1,0.1))
   }
-  plot <- ggplot(df, aes(x=x, y=y, group=grp, color=factor(n_wo))) +
+  plot <- ggplot(df, aes(x=x, y=y, group=grp, color=factor(n_wo),
+                         shape=factor(n_wo))) +
     geom_line(color="darkgrey", linewidth=0.4) +
     geom_point() +
     scale_color_manual(values=c("#009E73", "#56B4E9", "#CC79A7", "#E69F00")) +
+    scale_shape_manual(values=c(16,15,18,17)) +
     scale_x_cts +
     scale_y +
-    labs(x=x_lab, y="ETI/IT sample size ratio", color=lab_col) +
+    labs(x=x_lab, y="ETI/IT sample size ratio", color=lab_col, shape=lab_col) +
     theme_
   
   return(plot)
@@ -168,25 +175,35 @@ for (which_plot in c("basic", "n_omit")) {
   }
   
   # Plot component 1: Sequences
-  v_ratios_1 <- c()
-  for (ow in ow_vec) {
-    v_ratios_1 <- c(v_ratios_1, sapply(n_sequences, function(x) {
-      if (which_plot=="pte") { ow[1] <- x-(ow[2]+1) } # Hack to get PTE plot to work correctly
-      tryCatch(
-        expr = {
-          return(ss_ratio(
-            power = 0.9,
-            n_sequences = x,
-            n_clust_per_seq = 4,
-            effect_size = 0.1,
-            icc = 0.05,
-            n_omit = ow[1],
-            n_wash = ow[2]
-          ))
-        },
-        error = function(e) { return(NA) }
-      )
-    }))
+  if (cfg$regen_objs) {
+    
+    v_ratios_1 <- c()
+    for (ow in ow_vec) {
+      v_ratios_1 <- c(v_ratios_1, sapply(n_sequences, function(x) {
+        if (which_plot=="pte") { ow[1] <- x-(ow[2]+1) } # Hack to get PTE plot to work correctly
+        tryCatch(
+          expr = {
+            return(ss_ratio(
+              power = 0.9,
+              n_sequences = x,
+              n_clust_per_seq = 4,
+              effect_size = 0.1,
+              icc = 0.05,
+              cac = 1,
+              n_omit = ow[1],
+              n_wash = ow[2]
+            ))
+          },
+          error = function(e) { return(NA) }
+        )
+      }))
+    }
+    saveRDS(v_ratios_1, paste0("objs/v_ratios_1_", which_plot, ".rds"))
+    
+  } else {
+    
+    v_ratios_1 <- readRDS(paste0("objs/v_ratios_1_", which_plot, ".rds"))
+    
   }
   p01 <- make_plot(
     x_lab = "# sequences",
@@ -200,24 +217,34 @@ for (which_plot in c("basic", "n_omit")) {
   
   # Plot component 3: ICCs
   iccs <- c(c(0,0.005),seq(0.01,0.2,0.01))
-  v_ratios_3 <- c()
-  for (ow in ow_vec) {
-    v_ratios_3 <- c(v_ratios_3, sapply(iccs, function(x) {
-      tryCatch(
-        expr = {
-          return(ss_ratio(
-            power = 0.9,
-            n_sequences = 6,
-            n_clust_per_seq = 4,
-            effect_size = 0.1,
-            icc = x,
-            n_omit = ow[1],
-            n_wash = ow[2]
-          ))
-        },
-        error = function(e) { return(NA) }
-      )
-    }))
+  if (cfg$regen_objs) {
+    
+    v_ratios_3 <- c()
+    for (ow in ow_vec) {
+      v_ratios_3 <- c(v_ratios_3, sapply(iccs, function(x) {
+        tryCatch(
+          expr = {
+            return(ss_ratio(
+              power = 0.9,
+              n_sequences = 6,
+              n_clust_per_seq = 4,
+              effect_size = 0.1,
+              icc = x,
+              cac = 1,
+              n_omit = ow[1],
+              n_wash = ow[2]
+            ))
+          },
+          error = function(e) { return(NA) }
+        )
+      }))
+    }
+    saveRDS(v_ratios_3, paste0("objs/v_ratios_3_", which_plot, ".rds"))
+    
+  } else {
+    
+    v_ratios_3 <- readRDS(paste0("objs/v_ratios_3_", which_plot, ".rds"))
+    
   }
   p03 <- make_plot(
     x_lab = "ICC",
@@ -256,55 +283,69 @@ for (which_plot in c("basic", "n_omit")) {
 ##### Plot: Staircase design #####
 ##################################.
 
-df_res <- data.frame(
-  nba = integer(),
-  icc = double(),
-  n_seq = integer(),
-  n_clust_per_seq = integer(),
-  ssr = double()
-)
-
-for (icc in c(0.001,0.01,0.05,0.1)) {
-  for (n_clust_per_seq in c(2)) {
-    for (n_seq in c(4,6,8)) {
-      for (nba in c(1:5)) {
-        
-        if (nba==1) {
-          ssr <- 1
-        } else {
-          ssr <- suppressMessages({
-            ss_ratio(
-              power = 0.9,
-              n_sequences = n_seq,
-              n_clust_per_seq = n_clust_per_seq,
-              effect_size = 0.1,
-              icc = icc,
-              n_omit = 0,
-              n_wash = 0,
-              staircase = T,
-              n_before_and_after = nba
-            )
-          })
+if (cfg$regen_objs) {
+  
+  df_res <- data.frame(
+    nba = integer(),
+    icc = double(),
+    n_seq = integer(),
+    n_clust_per_seq = integer(),
+    ssr = double()
+  )
+  
+  for (icc in c(0.001,0.01,0.05,0.1)) {
+    for (n_clust_per_seq in c(2)) {
+      for (n_seq in c(4,6,8)) {
+        for (nba in c(1:5)) {
+          
+          if (nba==1) {
+            ssr <- 1
+          } else {
+            ssr <- suppressMessages({
+              ss_ratio(
+                power = 0.9,
+                n_sequences = n_seq,
+                n_clust_per_seq = n_clust_per_seq,
+                effect_size = 0.1,
+                icc = icc,
+                cac = 1,
+                n_omit = 0,
+                n_wash = 0,
+                staircase = T,
+                n_before_and_after = nba
+              )
+            })
+          }
+          
+          df_res[nrow(df_res)+1,] <- list(nba, icc, n_seq, n_clust_per_seq, ssr)
+          
         }
-        
-        df_res[nrow(df_res)+1,] <- list(nba, icc, n_seq, n_clust_per_seq, ssr)
-        
       }
     }
   }
+  
+  df_res %<>% dplyr::mutate(
+    n_seq = paste0(n_seq, " sequences"),
+    nba = nba*2
+  )
+  
+  saveRDS(df_res, "objs/df_res.rds")
+  
+} else {
+  
+  df_res <- readRDS("objs/df_res.rds")
+  
 }
 
-df_res %<>% dplyr::mutate(
-  n_seq = paste0(n_seq, " sequences"),
-  nba = nba*2
-)
-plot <- ggplot(df_res, aes(x=nba, y=ssr, color=factor(icc))) +
+plot <- ggplot(df_res, aes(x=nba, y=ssr, color=factor(icc), shape=factor(icc))) +
   facet_grid(cols=dplyr::vars(n_seq)) +
   geom_point() +
   geom_line() +
   scale_color_manual(values=c("#009E73", "#56B4E9", "#CC79A7", "#E69F00")) +
   scale_y_continuous(breaks=seq(1,3,0.5)) +
-  labs(x="Number of time points observed per sequence", y="ETI/IT sample size ratio", color="ICC")
+  scale_shape_manual(values=c(16,15,18,17)) +
+  labs(x="Number of time points observed per sequence",
+       y="ETI/IT sample size ratio", color="ICC", shape="ICC")
 ggsave(
     filename = paste0("../Figures + Tables/", cfg2$d, " fig_staircase.pdf"),
   plot=plot, device="pdf", width=8, height=3
