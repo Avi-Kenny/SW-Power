@@ -7,7 +7,9 @@ cfg2 <- list(
   d = format(Sys.time(), "%Y-%m-%d")
 )
 
-sim <- readRDS("SimEngine.out/power_1_20250225.rds")
+sim <- readRDS("SimEngine.out/power_1_20251105.rds")
+
+sim$results %<>% dplyr::filter(icc!=0.05)
 
 summ <- SimEngine::summarize(sim,
   list(stat="mean", x="reject", name="power")
@@ -59,7 +61,9 @@ ggsave(
 ##### Sim results: washout models #####
 #######################################.
 
-sim <- readRDS("SimEngine.out/washout_1_20250213.rds")
+sim <- readRDS("SimEngine.out/washout_1_20251105.rds")
+
+sim$results %<>% dplyr::filter(icc!=0.05)
 
 summ <- SimEngine::summarize(sim,
                              list(stat="mean", x="reject", name="power")

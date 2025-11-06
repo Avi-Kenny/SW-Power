@@ -1,5 +1,102 @@
+# Cluster SSR
+if (F) {
+  
+  ####################################.
+  ##### Declare helper functions #####
+  ####################################.
+  
+  
+  ss_ratio2(
+    power = 0.9,
+    n_sequences = 10,
+    n_ind_per_cell = 5,
+    effect_size = 0.4,
+    icc = 0.15,
+    cac = 0.9, # !!!!!
+    n_omit = 0,
+    n_wash = 0,
+    quiet = F
+  )
+  
+}
+
+# SSR experimentation
+if (F) {
+  
+  ss_ratio(
+    power = 0.9,
+    n_sequences = 6,
+    n_clust_per_seq = 4,
+    effect_size = 0.8/sqrt(6),
+    icc = 0.15,
+    cac = 0.7,
+    n_omit = ow[1],
+    n_wash = ow[2],
+    quiet = F
+  )
+  
+  
+  n_sequences <- c(4, 8, 12)
+  # n_sequences <- c(4, 8)
+  v_ratios_1 <- c()
+  for (ow in ow_vec) {
+    v_ratios_1 <- c(v_ratios_1, sapply(n_sequences, function(x) {
+      if (which_plot=="pte") { ow[1] <- x-(ow[2]+1) }
+      tryCatch(
+        expr = {
+          return(ss_ratio(
+            power = 0.9,
+            n_sequences = x,
+            n_clust_per_seq = 4,
+            # effect_size = 0.4,
+            # effect_size = 0.8/sqrt(x),
+            effect_size = 1.6/x,
+            icc = 0.05,
+            cac = 0.5,
+            # cac = 0.75,
+            # cac = 0.9,
+            # cac = 1,
+            n_omit = ow[1],
+            n_wash = ow[2],
+            quiet = F
+          ))
+        },
+        error = function(e) { return(NA) }
+      )
+    }))
+  }
+  
+  # iccs <- c(c(0,0.005),seq(0.01,0.2,0.01))
+  iccs <- c(0, 0.05, 0.1, 0.15)
+  v_ratios_3 <- c()
+  for (ow in ow_vec) {
+    v_ratios_3 <- c(v_ratios_3, sapply(iccs, function(x) {
+      tryCatch(
+        expr = {
+          return(ss_ratio(
+            power = 0.9,
+            n_sequences = 6,
+            n_clust_per_seq = 4,
+            effect_size = 0.4,
+            icc = x,
+            cac = 0.5,
+            # cac = 0.75,
+            # cac = 0.9,
+            # cac = 1,
+            n_omit = ow[1],
+            n_wash = ow[2],
+            quiet = F
+          ))
+        },
+        error = function(e) { return(NA) }
+      )
+    }))
+  }
+  
+}
+
 # Robust standard error
-if (T) {
+if (F) {
   
   # > head(dat)
   # i j k      y_ij x_ij s_ij

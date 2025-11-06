@@ -9,25 +9,27 @@ if (cfg$sim_which=="Power") {
     # # Testing
     # L <- list(data_type="normal", sigma=2, icc=0.1, n_sequences=5, n_clust_per_seq=2, n_ind_per_cell=8, re="cluster+time", estimand="TATE", model=list(cal_time="cat", exp_time="IT", n_omit=0))
     
+    # Generate variance components
+    tau <- sqrt(L$sigma^2*L$cac*L$icc/(1-L$icc))
+    gamma <- sqrt(L$sigma^2*(1-L$cac)*L$icc/(1-L$icc))
+    
     # Generate data
     batch({
       if (L$tvte) {
-        # delta_s <- seq(0.15, 0.3, length.out=L$n_sequences)
-        delta_s <- seq(0.2, 0.4, length.out=L$n_sequences)
+        delta_s <- seq(0.1, 0.3, length.out=L$n_sequences)
       } else {
         delta_s <- rep(0.2,L$n_sequences)
       }
-      tau <- L$sigma * sqrt(L$icc/(1-L$icc))
       dat <- generate_dataset(
         data_type = L$data_type,
         sigma = L$sigma,
         tau = tau,
+        gamma = gamma,
         beta_j = seq(from=0, to=1, length.out=L$n_sequences+1),
         delta_s = delta_s,
         n_sequences = L$n_sequences,
         n_clust_per_seq = L$n_clust_per_seq,
-        n_ind_per_cell = L$n_ind_per_cell,
-        re = L$re
+        n_ind_per_cell = L$n_ind_per_cell
       )
     })
     
@@ -42,24 +44,6 @@ if (cfg$sim_which=="Power") {
       estimand_type <- "PTE"
       estimand_time <- L$n_sequences
     }
-    
-    # Parse random effects
-    if (L$re=="cluster+time") {
-      rand_eff <- c("clust", "time")
-    } else if (L$re=="cluster") {
-      rand_eff <- c("clust")
-    }
-    
-    # # Analyze data
-    # results_old <- analyze_data(
-    #   dat = dat,
-    #   cal_time = L$model$cal_time,
-    #   exp_time = L$model$exp_time,
-    #   re = L$re,
-    #   estimand_type = estimand_type,
-    #   estimand_time = estimand_time,
-    #   return_curve = F
-    # )
     
     # Read in data
     suppressMessages({
@@ -79,7 +63,7 @@ if (cfg$sim_which=="Power") {
       estimand_time = estimand_time,
       exp_time = L$model$exp_time,
       cal_time = L$model$cal_time,
-      re = rand_eff
+      re = c("clust", "time")
     )
     
     # !!!!! TESTING
@@ -121,7 +105,7 @@ if (cfg$sim_which=="Power") {
       reject = reject,
       est = results$te_est,
       se = results$te_se,
-      true_tate = 0.2
+      true_tate = 0.3 # Updated
     ))
     
   }
@@ -134,19 +118,23 @@ if (cfg$sim_which=="Power") {
   
   one_simulation <- function() {
     
-    # Generate data
     batch({
-      tau <- L$sigma * sqrt(L$icc/(1-L$icc))
+      
+      # Generate variance components
+      tau <- sqrt(L$sigma^2*L$cac*L$icc/(1-L$icc))
+      gamma <- sqrt(L$sigma^2*(1-L$cac)*L$icc/(1-L$icc))
+      
+      # Generate data
       dat <- generate_dataset(
         data_type = L$data_type,
         sigma = L$sigma,
         tau = tau,
+        gamma = gamma,
         beta_j = seq(from=0, to=1, length.out=L$n_sequences+1),
         delta_s = rep(0.2,L$n_sequences),
         n_sequences = L$n_sequences,
         n_clust_per_seq = L$n_clust_per_seq,
-        n_ind_per_cell = L$n_ind_per_cell,
-        re = L$re
+        n_ind_per_cell = L$n_ind_per_cell
       )
     })
     
@@ -163,13 +151,6 @@ if (cfg$sim_which=="Power") {
     } else if (L$estimand=="TATE(3,S)") {
       estimand_time <- c(4,L$n_sequences)
       n_wash <- 3
-    }
-    
-    # Parse random effects
-    if (L$re=="cluster+time") {
-      rand_eff <- c("clust", "time")
-    } else if (L$re=="cluster") {
-      rand_eff <- c("clust")
     }
     
     # Prep work
@@ -207,10 +188,7 @@ if (cfg$sim_which=="Power") {
       if (L$model$cal_time!="categorical") {
         stop("DCT model only implemented for categorical calendar time")
       }
-      if (L$re!="cluster+time") {
-        stop("DCT model only implemented for re=='cluster+time'")
-      }
-      
+
       model_pit <- lme4::lmer(
         formula = "y_ij~factor(j)+factor(s_ij)+(1|i)+(1|ij)",
         data = dat
@@ -228,7 +206,7 @@ if (cfg$sim_which=="Power") {
         dat = sw_dat,
         exp_time = "IT",
         cal_time = L$model$cal_time,
-        re = rand_eff
+        re = c("clust", "time")
       )
       
     } else if (L$model$exp_time=="ETI") {
@@ -239,7 +217,7 @@ if (cfg$sim_which=="Power") {
         estimand_time = estimand_time,
         exp_time = "ETI",
         cal_time = L$model$cal_time,
-        re = rand_eff
+        re = c("clust", "time")
       )
       
     } else if (L$model$exp_time=="IT-full-temp") {
@@ -248,7 +226,7 @@ if (cfg$sim_which=="Power") {
         dat = sw_dat,
         exp_time = "IT",
         cal_time = L$model$cal_time,
-        re = rand_eff
+        re = c("clust", "time")
       )
       
     }

@@ -3,15 +3,13 @@
 #' @param data_type One of c("normal", "binomial"). Type of outcome.
 #' @param sigma Numeric; SD of the outcome (ignored if data_type=="binomial")
 #' @param tau Numeric. SD of the cluster random effect
+#' @param gamma Numeric. SD of the random time effect
 #' @param beta_j Vector of length J; calendar time effects
 #' @param delta_s Vector of length J-1. Exposure time treatment effects
 #' @param n_sequences Integer. Number of sequences
 #' @param n_clust_per_seq Integer. Number of clusters per sequence
 #' @param n_ind_per_cell Integer. Number of individuals per cluster - time
 #'     period cell (K)
-#' @param re One of c("cluster", "cluster+time"); whether a cluster intercept
-#'     should be included ("cluster") or a cluster intercept plus a
-#'     cluster-period intercept ("cluster+time")
 #' @param n_extra_c Integer. Number of extra time points to add to the beginning
 #'     of the design (i.e., extra control periods)
 #' @param n_extra_t Integer. Number of extra time points to add to the end of
@@ -22,8 +20,8 @@
 #'     and the last value of `delta_s` will be "extended" to the extra time
 #'     points.
 generate_dataset <- function(
-  data_type, sigma, tau, beta_j, delta_s, n_sequences, n_clust_per_seq,
-  n_ind_per_cell, re, n_extra_c=0, n_extra_t=0
+  data_type, sigma, tau, gamma, beta_j, delta_s, n_sequences, n_clust_per_seq,
+  n_ind_per_cell, n_extra_c=0, n_extra_t=0
 ) {
   
   # Misc
@@ -44,11 +42,7 @@ generate_dataset <- function(
   pointer <- 1
   for (i in clusters) {
     
-    if (re=="cluster") {
-      alpha_i <- rnorm(n=1, mean=0, sd=tau)
-    } else if (re=="cluster+time") {
-      alpha_i <- rnorm(n=1, mean=0, sd=tau/sqrt(2))
-    }
+    alpha_i <- rnorm(n=1, mean=0, sd=tau)
     
     for (j in js) {
       
@@ -59,11 +53,7 @@ generate_dataset <- function(
       s_ij_mod <- min(s_ij, length(delta_s))
       j_mod <- max(min(j, J), 1)
       
-      if (re=="cluster") {
-        gamma_ij <- 0
-      } else if (re=="cluster+time") {
-        gamma_ij <- rnorm(n=1, mean=0, sd=tau/sqrt(2))
-      }
+      gamma_ij <- rnorm(n=1, mean=0, sd=gamma)
       
       if (data_type=="normal") {
         

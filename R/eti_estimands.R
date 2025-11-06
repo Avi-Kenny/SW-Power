@@ -21,7 +21,7 @@ make_plot2 <- function(x_lab, which_plot, df) {
     geom_point() +
     scale_color_manual(values=c("#009E73", "#56B4E9", "#CC79A7", "#E69F00")) +
     scale_shape_manual(values=c(16,15,18,17)) +
-    scale_y_log10(breaks=c(50,100,200,400,800,1600)) +
+    scale_y_log10(breaks=c(1,2,5,10,25,50,100,200,400)) +
     labs(x="Estimand", y="Sample size required for 90% power (log scale)",
          color=x_lab, shape=x_lab) +
     theme(legend.position="right")
@@ -51,7 +51,6 @@ for (which_plot in c("n_omit", "n_wash", "pte")) {
   }
   
   # Plot component 1: Sequences
-  # n_sequences <- c(2:10)
   n_sequences <- c(4,6,8,10)
   ss_vec_1 <- c()
   for (ow in ow_vec) {
@@ -59,17 +58,33 @@ for (which_plot in c("n_omit", "n_wash", "pte")) {
       if (which_plot=="pte") { ow[1] <- x-(ow[2]+1) } # Hack to get PTE plot to work correctly
       tryCatch(
         expr = {
+          
+          # Individuals
           return(calc_ss(
-            power = 0.9,
-            model = "ETI",
-            n_sequences = x,
-            n_clust_per_seq = 4,
-            effect_size = 0.1,
-            icc = 0.05,
-            cac = 1,
-            n_omit = ow[1],
-            n_wash = ow[2]
+          power = 0.9,
+          model = "ETI",
+          n_sequences = x,
+          n_clust_per_seq = 4,
+          effect_size = 0.3,
+          icc = 0.05,
+          cac = 0.75,
+          n_omit = ow[1],
+          n_wash = ow[2]
           )$n)
+          
+          # # Clusters
+          # return(calc_ss2(
+          #   power = 0.9,
+          #   model = "ETI",
+          #   n_sequences = x,
+          #   n_ind_per_cell = 5, # !!!!!
+          #   effect_size = 0.2,
+          #   icc = 0.05,
+          #   cac = 0.75,
+          #   n_omit = ow[1],
+          #   n_wash = ow[2]
+          # )$n)
+          
         },
         error = function(e) { return(NA) }
       )
@@ -84,7 +99,7 @@ for (which_plot in c("n_omit", "n_wash", "pte")) {
       n_wo = rep(c(1:length(ow_vec))-1, each=length(n_sequences))
     )
   )
-  
+
   ggsave(
     filename = paste0("../Figures + Tables/", cfg2$d, " fig_SS_ETI_", which_plot,
                       ".pdf"),
@@ -92,6 +107,3 @@ for (which_plot in c("n_omit", "n_wash", "pte")) {
   )
   
 }
-
-
-

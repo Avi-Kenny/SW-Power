@@ -1,14 +1,14 @@
 # Main config
 cfg <- list(
   regen_objs = T,
-  run_sims = F,
-  run_it_vs_eti = T,
+  run_sims = T,
+  run_it_vs_eti = F,
   run_eti_estimands = F,
   run_double_clusters = F,
   run_extra_time = F,
   run_process = F,
-  sim_which = "Power", # "Power", "Washout"
-  sim_level_set = "Power set 1", # "Power set 1", "Washout set 1"
+  sim_which = "Washout", # "Power", "Washout"
+  sim_level_set = "Washout set 1", # "Power set 1", "Washout set 1"
   sim_run_or_update = "run",
   sim_num = 1000,
   # sim_num = 1, # !!!!!

@@ -87,6 +87,7 @@ calc_power <- function(model, n_sequences, n_clust_per_seq, n_ind_per_cell,
     }
   }
   
+  # browser() # !!!!!
   power <- suppressWarnings({
     swPwr(
       design = design,
@@ -103,5 +104,227 @@ calc_power <- function(model, n_sequences, n_clust_per_seq, n_ind_per_cell,
   })
 
   return(as.numeric(power))
+  
+}
+
+# Function to calculate sample size corresponding to desired power
+calc_ss2 <- function(power, model, n_sequences, n_ind_per_cell, effect_size,
+                     icc, cac, n_omit, n_wash, staircase=F,
+                     n_before_and_after=NA) {
+  
+  power_n <- function(n_clust) {
+    calc_power(
+      model = model,
+      n_sequences = n_sequences,
+      n_clust_per_seq = n_clust,
+      n_ind_per_cell = n_ind_per_cell,
+      effect_size = effect_size,
+      icc = icc,
+      cac = cac,
+      n_omit = n_omit,
+      n_wash = n_wash,
+      staircase = staircase,
+      n_before_and_after = n_before_and_after
+    )
+  }
+  
+  n_lo <- 1
+  n_up <- 2
+  power_lo <- power_n(n_lo)
+  power_up <- power_n(n_up)
+  if (power_lo>power) { warning("Power sufficient with n_clust==1.") }
+  
+  # Get initial sample size range that contains 90% power
+  while(power_up<power) {
+    n_lo <- n_up
+    power_lo <- power_up
+    n_up <- round(n_up*2)
+    power_up <- power_n(n_up)
+    if (n_up>10^5) {
+      warning("90% power not possible with ", model, " model")
+      return(list(n=NA, power=NA))
+    }
+  }
+  
+  # Bisect interval until 90% range is found
+  while(n_up-n_lo>1) {
+    n_mid <- round(mean(c(n_lo,n_up)))
+    power_mid <- power_n(n_mid)
+    if (power_mid<power) {
+      n_lo <- n_mid
+      power_lo <- power_mid
+    } else {
+      n_up <- n_mid
+      power_up <- power_mid
+    }
+  }
+  
+  if (abs(power-power_lo)<abs(power-power_up)) {
+    return(list(n=n_lo, power=power_lo))
+  } else {
+    return(list(n=n_up, power=power_up))
+  }
+  
+}
+
+# Function to calculate sample size ratio (ETI:IT)
+ss_ratio2 <- function(power, n_sequences, n_ind_per_cell, effect_size, icc, cac,
+                      n_omit, n_wash, staircase=F, n_before_and_after=NA,
+                      quiet=T) {
+  
+  ss_it <- calc_ss2(
+    power = power,
+    model = "IT",
+    n_sequences = n_sequences,
+    n_ind_per_cell = n_ind_per_cell,
+    effect_size = effect_size,
+    icc = icc,
+    cac = cac,
+    n_omit = n_omit,
+    n_wash = n_wash,
+    staircase = staircase,
+    n_before_and_after = n_before_and_after
+  )
+  
+  ss_eti <- calc_ss2(
+    power = power,
+    model = "ETI",
+    n_sequences = n_sequences,
+    n_ind_per_cell = n_ind_per_cell,
+    effect_size = effect_size,
+    icc = icc,
+    cac = cac,
+    n_omit = n_omit,
+    n_wash = n_wash,
+    staircase = staircase,
+    n_before_and_after = n_before_and_after
+  )
+  
+  if (!quiet) {
+    cat(paste0("IT sample size: ", ss_it$n, "\n"))
+    cat(paste0("ETI sample size: ", ss_eti$n, "\n"))
+    cat(paste0("SSR: ", round(ss_eti$n/ss_it$n,1), "\n"))
+  }
+  
+  if (is.na(ss_eti$n) || is.na(ss_it$n)) {
+    return(list(ss_eti=NA, ss_it=NA, ssr=NA))
+  } else {
+    return(list(
+      ss_eti = ss_eti$n,
+      ss_it = ss_it$n,
+      ssr = ss_eti$n/ss_it$n
+    ))
+  }
+  
+}
+
+# Function to calculate sample size corresponding to desired power
+calc_ss <- function(power, model, n_sequences, n_clust_per_seq, effect_size,
+                    icc, cac, n_omit, n_wash, staircase=F,
+                    n_before_and_after=NA) {
+  
+  power_n <- function(n) {
+    calc_power(
+      model = model,
+      n_sequences = n_sequences,
+      n_clust_per_seq = n_clust_per_seq,
+      n_ind_per_cell = n,
+      effect_size = effect_size,
+      icc = icc,
+      cac = cac,
+      n_omit = n_omit,
+      n_wash = n_wash,
+      staircase = staircase,
+      n_before_and_after = n_before_and_after
+    )
+  }
+  
+  n_lo <- 1
+  n_up <- 2
+  power_lo <- power_n(n_lo)
+  power_up <- power_n(n_up)
+  if (power_lo>power) { warning("Power sufficient with n_ind_per_cell==1.") }
+  
+  # Get initial sample size range that contains 90% power
+  while(power_up<power) {
+    n_lo <- n_up
+    power_lo <- power_up
+    n_up <- round(n_up*2)
+    power_up <- power_n(n_up)
+    if (n_up>10^5) {
+      warning("90% power not possible with ", model, " model")
+      return(list(n=NA, power=NA))
+    }
+  }
+  
+  # Bisect interval until 90% range is found
+  while(n_up-n_lo>1) {
+    n_mid <- round(mean(c(n_lo,n_up)))
+    power_mid <- power_n(n_mid)
+    if (power_mid<power) {
+      n_lo <- n_mid
+      power_lo <- power_mid
+    } else {
+      n_up <- n_mid
+      power_up <- power_mid
+    }
+  }
+  
+  if (abs(power-power_lo)<abs(power-power_up)) {
+    return(list(n=n_lo, power=power_lo))
+  } else {
+    return(list(n=n_up, power=power_up))
+  }
+  
+}
+
+# Function to calculate sample size ratio (ETI:IT)
+ss_ratio <- function(power, n_sequences, n_clust_per_seq, effect_size, icc, cac,
+                     n_omit, n_wash, staircase=F, n_before_and_after=NA,
+                     quiet=T) {
+  
+  ss_it <- calc_ss(
+    power = power,
+    model = "IT",
+    n_sequences = n_sequences,
+    n_clust_per_seq = n_clust_per_seq,
+    effect_size = effect_size,
+    icc = icc,
+    cac = cac,
+    n_omit = n_omit,
+    n_wash = n_wash,
+    staircase = staircase,
+    n_before_and_after = n_before_and_after
+  )
+  
+  ss_eti <- calc_ss(
+    power = power,
+    model = "ETI",
+    n_sequences = n_sequences,
+    n_clust_per_seq = n_clust_per_seq,
+    effect_size = effect_size,
+    icc = icc,
+    cac = cac,
+    n_omit = n_omit,
+    n_wash = n_wash,
+    staircase = staircase,
+    n_before_and_after = n_before_and_after
+  )
+  
+  if (!quiet) {
+    cat(paste0("IT sample size: ", ss_it$n, "\n"))
+    cat(paste0("ETI sample size: ", ss_eti$n, "\n"))
+    cat(paste0("SSR: ", round(ss_eti$n/ss_it$n,1), "\n"))
+  }
+  
+  if (is.na(ss_eti$n) || is.na(ss_it$n)) {
+    return(list(ss_eti=NA, ss_it=NA, ssr=NA))
+  } else {
+    return(list(
+      ss_eti = ss_eti$n,
+      ss_it = ss_it$n,
+      ssr = ss_eti$n/ss_it$n
+    ))
+  }
   
 }

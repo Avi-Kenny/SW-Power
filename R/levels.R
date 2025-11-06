@@ -7,12 +7,12 @@ if (cfg$run_sims && Sys.getenv("sim_run") %in% c("first", "")) {
   # Figures: ...
   level_sets[["Power set 1"]] <- list(
     data_type = "normal",
-    sigma = 1.5,
-    icc = c(0.01,0.1),
+    sigma = 1, # 1.5
+    icc = c(0.01,0.05,0.1),
+    cac = 0.75,
     n_sequences = c(6, 12, 18, 24),
-    n_clust_per_seq = 2,
-    n_ind_per_cell = 8,
-    re = "cluster+time",
+    n_clust_per_seq = 4,
+    n_ind_per_cell = 5, # 8
     tvte = TRUE,
     estimand = c("TATE", "PTE-1", "PTE-S"),
     model = list(
@@ -31,12 +31,12 @@ if (cfg$run_sims && Sys.getenv("sim_run") %in% c("first", "")) {
   # Figures: ...
   level_sets[["Washout set 1"]] <- list(
     data_type = "normal",
-    sigma = 0.8,
-    icc = c(0.01,0.1),
+    sigma = 1, # 0.8
+    icc = c(0.01,0.05,0.1),
+    cac = 0.75,
     n_sequences = c(6, 9, 12),
-    n_clust_per_seq = 2,
-    n_ind_per_cell = 8,
-    re = "cluster+time",
+    n_clust_per_seq = 4,
+    n_ind_per_cell = 5, # 8
     tvte = FALSE,
     estimand = c("TATE(1,S)", "TATE(3,S)"),
     model = list(
